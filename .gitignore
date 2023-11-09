@@ -1,6 +1,9 @@
 # my venv
 .software_integration/
 
+# official materials
+official_materials/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
