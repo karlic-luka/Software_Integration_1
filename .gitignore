@@ -4,6 +4,9 @@
 # official materials
 official_materials/*
 
+# my own testing materials
+test_pyqtgraph.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
