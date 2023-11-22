@@ -5,9 +5,10 @@ import pyaudio
 
 
 def data_to_array(data, channels):
-    return (np.frombuffer(data, dtype=np.int16)
-            .reshape((-1, channels))
-            .astype(float) / 2**15)
+    return (
+        np.frombuffer(data, dtype=np.int16).reshape((-1, channels)).astype(float)
+        / 2**15
+    )
 
 
 class SoundCardDataSource(object):
@@ -20,13 +21,17 @@ class SoundCardDataSource(object):
         # Check format is supported
         self.pyaudio = pyaudio.PyAudio()
         self.stream = None
-        dev = self.pyaudio.get_default_input_device_info()
 
+    def connect_and_start_streaming(self, index):
+        dev = self.pyaudio.get_device_info_by_index(index)
+        print(f'Connecting to device {dev["name"]}')
+        print(f'Device info: {dev.items()}')
         if not self.pyaudio.is_format_supported(
-                rate=sampling_rate,
-                input_device=dev['index'],
-                input_channels=channels,
-                input_format=pyaudio.paInt16):
+            rate=self.fs,
+            input_device=dev["index"],
+            input_channels=self.channels,
+            input_format=pyaudio.paInt16,
+        ):
             raise RuntimeError("Unsupported audio format or rate")
 
         # Allocate buffers
@@ -45,7 +50,7 @@ class SoundCardDataSource(object):
             frames_per_buffer=self.chunk_size,
             rate=self.fs,
             stream_callback=callback,
-            input=True
+            input=True,
         )
 
     def __del__(self):
@@ -59,9 +64,7 @@ class SoundCardDataSource(object):
         self.next_chunk = (self.next_chunk + 1) % self.buffer.shape[0]
 
     def _allocate_buffer(self):
-        self.buffer = np.zeros((self._num_chunks,
-                                self.chunk_size,
-                                self.channels))
+        self.buffer = np.zeros((self._num_chunks, self.chunk_size, self.channels))
         self.next_chunk = 0
 
     @property
@@ -78,13 +81,13 @@ class SoundCardDataSource(object):
 
     def get_buffer(self):
         """Return all chunks joined together"""
-        a = self.buffer[:self.next_chunk]
-        b = self.buffer[self.next_chunk:]
-        return np.concatenate((b, a), axis=0) \
-                 .reshape((self.buffer.shape[0] * self.buffer.shape[1],
-                           self.buffer.shape[2]))
+        a = self.buffer[: self.next_chunk]
+        b = self.buffer[self.next_chunk :]
+        return np.concatenate((b, a), axis=0).reshape(
+            (self.buffer.shape[0] * self.buffer.shape[1], self.buffer.shape[2])
+        )
 
     @property
     def timeValues(self):
         N = self.buffer.shape[0] * self.buffer.shape[1]
-        return np.linspace(0, N/self.fs, N)
+        return np.linspace(0, N / self.fs, N)

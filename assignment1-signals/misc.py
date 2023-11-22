@@ -21,4 +21,15 @@ def fft_buffer(x):
     Pxx = abs(fx) ** 2 / (np.abs(window) ** 2).sum()
     # Scale for one-sided
     Pxx[1:-1] *= 2
-    return Pxx**0.5
+    return Pxx**0.5, fx
+
+
+def ifft_buffer(fhat, threshold=0):
+    n = len(fhat)
+    PSD = fhat * np.conj(fhat) / n
+    indices = PSD > threshold  # find all freqs with large enough power
+    # PSDclean = PSD * indices  # zero out all small Fourier coeffs. in Y
+    fhat = indices * fhat  # zero out small Fourier coeffs. in Y
+    # fhat signal
+    inverse_fft = np.fft.irfft(fhat)
+    return inverse_fft
