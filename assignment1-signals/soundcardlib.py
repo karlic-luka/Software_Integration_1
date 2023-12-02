@@ -91,3 +91,21 @@ class SoundCardDataSource(object):
     def timeValues(self):
         N = self.buffer.shape[0] * self.buffer.shape[1]
         return np.linspace(0, N / self.fs, N)
+
+    def get_available_devices(self):
+        devices_dict = {}
+        for i in range(self.pyaudio.get_device_count()):
+            dev = self.pyaudio.get_device_info_by_index(i)
+            # print(f'Index: {i}, Name: {dev["name"]}')
+            try:
+                if self.pyaudio.is_format_supported(
+                    rate=self.fs,
+                    input_device=dev["index"],
+                    input_channels=self.channels,
+                    input_format=pyaudio.paInt16,
+                ):
+                    # print(f'Index: {i}, Name: {dev["name"]}')
+                    devices_dict[dev["name"]] = i
+            except ValueError:
+                print(f'Index: {i}, Name: {dev["name"]} (not supported)')
+        return devices_dict

@@ -107,10 +107,7 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
             super(RealTimeFFTWindow, self).keyPressEvent(event)
 
     def get_input_devices(self):
-        self.devices_dict = {}
-        for i in range(self.soundcardlib.pyaudio.get_device_count()):
-            device = self.soundcardlib.pyaudio.get_device_info_by_index(i)
-            self.devices_dict[device["name"]] = i
+        self.devices_dict = self.soundcardlib.get_available_devices()
         return self.devices_dict
 
     def connect_to_device(self, device_name: str):
