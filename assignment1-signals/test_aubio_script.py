@@ -45,7 +45,7 @@ else:
 tolerance = 0.8
 win_s = 4096  # fft size
 hop_s = buffer_size  # hop size
-methods = ["default", "mcomb", "yin", "yinfft", "fcomb", "schmitt"]
+methods = ["default", "yinfft", "yin", "yinfast", "fcomb", "mcomb", "schmitt", "specacf"]
 idx = 1
 pitch_o = aubio.pitch(methods[idx], win_s, hop_s, samplerate)
 # pitch_o.set_unit("midi")

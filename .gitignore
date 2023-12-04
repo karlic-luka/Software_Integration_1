@@ -3,7 +3,8 @@
 
 # official materials
 official_materials/*
-
+assignment1-signals/audio_inputs/
+assignment1-signals/aubio_outputs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
