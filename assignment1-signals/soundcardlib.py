@@ -30,7 +30,8 @@ class SoundCardDataSource(object):
             rate=self.fs,
             input_device=dev["index"],
             input_channels=self.channels,
-            input_format=pyaudio.paInt16,
+            input_format=pyaudio.paFloat32, # TODO for aubio
+            # input_format=pyaudio.paInt16,
         ):
             raise RuntimeError("Unsupported audio format or rate")
 

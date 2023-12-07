@@ -5,6 +5,8 @@ import pyqtgraph as pg  # pip install pyqtgraph
 from soundcardlib import SoundCardDataSource
 from misc import rfftfreq, fft_buffer, ifft_buffer
 
+import aubio
+
 
 class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
     def __init__(self, parent=None):
@@ -17,6 +19,17 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         # helper function so I don't have to change the .py file generated with pyuic5
         # every time when I change the .ui file
         self.soundcardlib = soundcardlib
+        methods = ["default", "mcomb", "yin", "yinfft", "fcomb", "schmitt"]
+        self.pitch_method = methods[2]
+        self.aubio_pitch = aubio.pitch(
+            method=self.pitch_method,
+            buf_size=self.soundcardlib.chunk_size * self.soundcardlib.num_chunks,
+            hop_size=self.soundcardlib.chunk_size * self.soundcardlib.num_chunks,
+            samplerate=self.soundcardlib.fs
+        )
+        self.aubio_pitch.set_unit("Hz")
+        self.aubio_pitch.set_silence(-40)
+        self.aubio_pitch.set_tolerance(0.8)
         self.paused = True
         self.downsample = True
         return
@@ -84,6 +97,13 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         # collect data
         data = self.soundcardlib.get_buffer()
         weighting = np.exp(self.timeValues / self.timeValues[-1])
+        
+        # calculate pitch
+        # aubio_data = np.frombuffer(weighting * data[:, 0], dtype=np.float32)[0:12288]
+        aubio_data = np.frombuffer(data[:, 0], dtype=np.float32)[0:12288]
+        pitch = self.aubio_pitch(aubio_data)[0]
+        print(pitch)
+
         Pxx, fhat = fft_buffer(weighting * data[:, 0])
         ifft = ifft_buffer(fhat, threshold=-1)
         if self.downsample:
