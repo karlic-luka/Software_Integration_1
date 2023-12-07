@@ -1,6 +1,8 @@
 # my venv
 .software_integration/
 
+# inputs
+assignment1-signals/audio_inputs/*
 # official materials
 official_materials/*
 
