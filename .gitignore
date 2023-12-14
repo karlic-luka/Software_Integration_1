@@ -5,6 +5,10 @@
 assignment1-signals/audio_inputs/*
 # official materials
 official_materials/*
+assignment1-signals/test_scripts/*
+assignment1-signals/audio_inputs - Copy
+assignment1-signals/instrumental_audio
+assignment1-signals/outputs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
