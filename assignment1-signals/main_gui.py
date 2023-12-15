@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox,
 from PyQt5.uic import loadUi
 
 from soundcardlib import SoundCardDataSource
-from baseline_gui import Ui_MainWindow
+from baseline_gui_v2 import Ui_MainWindow
 from real_time_fft_window import RealTimeFFTWindow
 
 
@@ -26,12 +26,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.fft_window.prepare_for_plotting()
         # defaults
         self.ui.pb_start.setEnabled(False)
-        self.ui.cb_devices.setEnabled(True)
-        self.ui.cb_devices.setCurrentIndex(-1)
+        self.ui.cb_input_devices.setEnabled(True)
+        self.ui.cb_input_devices.setCurrentIndex(-1)
+        self.ui.cb_output_devices.setEnabled(True)
+        # self.ui.cb_output_devices.setCurrentIndex(-1)
+
         # list devices
         self.list_devices()
         # connect to device
-        self.ui.cb_devices.activated.connect(self.connect_to_device)
+        # self.ui.cb_input_devices.activated.connect(self.connect_to_device)
+        # self.ui.cb_output_devices.activated.connect(self.connect_to_device) # TODO
         self.set_fft_window_title()
 
         # button actions
@@ -57,16 +61,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return
 
     def list_devices(self):
-        self.ui.cb_devices.clear()
-        for device_name in self.ui.fft_window.get_input_devices().keys():
-            self.ui.cb_devices.addItem(device_name)
+        self.ui.cb_input_devices.clear()
+        self.ui.cb_output_devices.clear()
+        input_devices, output_devices = self.ui.fft_window.get_input_output_devices()
+        print("input devices: ", input_devices)
+        print("output devices: ", output_devices)
+        for device_name in input_devices.keys():
+            self.ui.cb_input_devices.addItem(device_name)
+        for device_name in output_devices.keys():
+            self.ui.cb_output_devices.addItem(device_name)
         return
 
 
 def main():
     app = QtWidgets.QApplication([])  # for NEW versions
     # Setup soundcardlib
-    FS = 44000  # Hz
+    FS = 16000  # Hz
     soundcardlib = SoundCardDataSource(
         num_chunks=3, sampling_rate=FS, chunk_size=4 * 1024
     )

@@ -5,6 +5,14 @@ import pyqtgraph as pg  # pip install pyqtgraph
 from soundcardlib import SoundCardDataSource
 from misc import rfftfreq, fft_buffer, ifft_buffer
 
+import torch
+import torchaudio
+from denoiser.pretrained import add_model_flags, get_model
+from denoiser.demucs import DemucsStreamer
+from denoiser.utils import bold
+from denoiser.dsp import convert_audio
+import time
+
 
 class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
     def __init__(self, parent=None):
@@ -19,8 +27,16 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.soundcardlib = soundcardlib
         self.paused = True
         self.downsample = True
-        return
 
+        # prepare fb_denoiser model
+        # self.model = get_model("fb_denoiser").to("cpu") # TODO: change to gpu
+        # self.model.eval()
+        # print("Model loaded")
+        # self.streamer = DemucsStreamer(self.model, dry=0.04, num_frames=4) # TODO: add parameters
+        # print("Streamer loaded")
+
+        return
+    
     def prepare_for_plotting(self):
         # Setup first plot (time domain)
         self.p1 = self.addPlot()
@@ -83,6 +99,7 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
 
         # collect data
         data = self.soundcardlib.get_buffer()
+        # print("data shape: ", data.shape)
         weighting = np.exp(self.timeValues / self.timeValues[-1])
         Pxx, fhat = fft_buffer(weighting * data[:, 0])
         ifft = ifft_buffer(fhat, threshold=-1)
@@ -97,6 +114,16 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.ts2.setData(x=self.timeValues, y=ifft, **downsample_args)
         self.spec.setData(x=self.freqValues, y=(20 * np.log10(Pxx)))
 
+        # # denoise
+        # audio_frame = torch.from_numpy(data[:, 0]).to("cpu").double()
+        # # audio_frame = convert_audio(audio_frame, self.soundcardlib.fs, self.model.sample_rate, self.model.chin)
+        # start = time.time()
+        # with torch.no_grad():
+        #     denoised = self.model(audio_frame[None])[0]
+        # print(f'Inference time: {time.time() - start:.2f}s')
+        # print(f'Denoised audio shape: {denoised.shape}')
+
+
     def keyPressEvent(self, event):
         text = event.text()
         # Use spacebar to pause the graph
@@ -106,12 +133,12 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         else:
             super(RealTimeFFTWindow, self).keyPressEvent(event)
 
-    def get_input_devices(self):
-        self.devices_dict = self.soundcardlib.get_available_devices()
-        return self.devices_dict
+    def get_input_output_devices(self):
+        self.input_devices_dict, self.output_devices_dict = self.soundcardlib.get_available_devices()
+        return self.input_devices_dict, self.output_devices_dict
 
-    def connect_to_device(self, device_name: str):
-        dev_index = self.devices_dict[device_name]
+    def connect_to_input_device(self, device_name: str):
+        dev_index = self.input_devices_dict[device_name]
         self.soundcardlib.connect_and_start_streaming(dev_index)
         self.paused = False
         self.p1.setTitle("")
