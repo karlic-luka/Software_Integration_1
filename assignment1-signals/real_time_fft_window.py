@@ -20,7 +20,7 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.initialized_other_parameters = False
 
     def initialize_additional_parameters(
-        self, soundcardlib: SoundCardDataSource = None
+        self, args, soundcardlib: SoundCardDataSource = None
     ):
         # helper function so I don't have to change the .py file generated with pyuic5
         # every time when I change the .ui file
@@ -28,13 +28,26 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.paused = True
         self.downsample = True
 
-        # prepare fb_denoiser model
-        # self.model = get_model("fb_denoiser").to("cpu") # TODO: change to gpu
-        # self.model.eval()
-        # print("Model loaded")
-        # self.streamer = DemucsStreamer(self.model, dry=0.04, num_frames=4) # TODO: add parameters
-        # print("Streamer loaded")
+        self.setup_denoiser_model(args)
+        return
+    
+    def setup_denoiser_model(self, args):
+        # self.args.in_ = 8
+        args.in_ = 2 # TODO remove - testing purposes
+        args.out = 4
+        args.device = 'cpu'
+        args.num_threads = 1
+        # dry = 0.04
+        args.num_frames = 4
+        self.first = True
 
+        print(f'Args: {args}')
+        print(f'Loading model')
+        self.model = get_model(args).to(args.device)
+        self.model.eval()
+        print(f'Model loaded')
+        # print(f'Model: {self.model}')
+        self.streamer = DemucsStreamer(self.model, dry=args.dry, num_frames=args.num_frames)
         return
     
     def prepare_for_plotting(self):
@@ -100,6 +113,8 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         # collect data
         data = self.soundcardlib.get_buffer()
         # print("data shape: ", data.shape)
+        # print(f'dtype: {data.dtype}')
+
         weighting = np.exp(self.timeValues / self.timeValues[-1])
         Pxx, fhat = fft_buffer(weighting * data[:, 0])
         ifft = ifft_buffer(fhat, threshold=-1)
@@ -114,12 +129,18 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.ts2.setData(x=self.timeValues, y=ifft, **downsample_args)
         self.spec.setData(x=self.freqValues, y=(20 * np.log10(Pxx)))
 
-        # # denoise
-        # audio_frame = torch.from_numpy(data[:, 0]).to("cpu").double()
-        # # audio_frame = convert_audio(audio_frame, self.soundcardlib.fs, self.model.sample_rate, self.model.chin)
+        # denoise
+        length = len(data[:, 0])
+        self.first = False
+        if np.sum(data[:, 0]) == 0:
+            print(f'No audio data')
+            return        
+        # audio_frame = torch.from_numpy(data[:, 0]).to("cpu")
+
         # start = time.time()
         # with torch.no_grad():
-        #     denoised = self.model(audio_frame[None])[0]
+        #     denoised = self.streamer.feed(audio_frame[None])[0]
+
         # print(f'Inference time: {time.time() - start:.2f}s')
         # print(f'Denoised audio shape: {denoised.shape}')
 
@@ -148,9 +169,9 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     # Setup soundcardlib
-    FS = 44000  # Hz
+    FS = 44100  # Hz
     soundcardlib = SoundCardDataSource(
-        num_chunks=3, sampling_rate=FS, chunk_size=4 * 1024
+        num_chunks=3, sampling_rate=FS, chunk_size=4*1024
     )
     main_app = RealTimeFFTWindow(soundcardlib)
     main_app.show()

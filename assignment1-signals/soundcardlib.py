@@ -26,11 +26,12 @@ class SoundCardDataSource(object):
         dev = self.pyaudio.get_device_info_by_index(index)
         print(f'Connecting to device {dev["name"]}')
         print(f'Device info: {dev.items()}')
+        self.channels = min(dev["maxInputChannels"], 2) # NOTE: edited by Luka - denoiser
         if not self.pyaudio.is_format_supported(
             rate=self.fs,
             input_device=dev["index"],
             input_channels=self.channels,
-            input_format=pyaudio.paInt16,
+            input_format=pyaudio.paInt32, # NOTE: paFloat32 for denoiser - doesn't work
         ):
             raise RuntimeError("Unsupported audio format or rate")
 
@@ -45,7 +46,7 @@ class SoundCardDataSource(object):
 
         # Start the stream
         self.stream = self.pyaudio.open(
-            format=pyaudio.paInt16,
+            format=pyaudio.paFloat32,
             channels=self.channels,
             frames_per_buffer=self.chunk_size,
             rate=self.fs,
@@ -105,17 +106,17 @@ class SoundCardDataSource(object):
                     rate=self.fs,
                     input_device=dev["index"],
                     input_channels=self.channels,
-                    input_format=pyaudio.paInt16,
+                    input_format=pyaudio.paFloat32,
                 ):
                     input_devices_dict[dev["name"]] = i
             except ValueError:
-                print(f'OUTPUT: Index: {i}, Name: {dev["name"]} (not supported)')
+                print(f'INPUT: Index: {i}, Name: {dev["name"]} (not supported)')
             try:
                 if self.pyaudio.is_format_supported(
                     rate=self.fs,
                     output_device=dev["index"],
                     output_channels=2, # TODO: parameterize
-                    output_format=pyaudio.paInt16,
+                    output_format=pyaudio.paInt32,
                 ):
                     output_devices_dict[dev["name"]] = i
             except ValueError:

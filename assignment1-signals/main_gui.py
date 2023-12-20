@@ -14,15 +14,23 @@ from soundcardlib import SoundCardDataSource
 from baseline_gui_v2 import Ui_MainWindow
 from real_time_fft_window import RealTimeFFTWindow
 
+from denoiser.pretrained import get_model
+from denoiser.demucs import DemucsStreamer
+from misc import get_parser
+
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, soundcardlib, parent=None):
         super(MyMainWindow, self).__init__(parent)
         QMainWindow.__init__(self, parent)
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.args = get_parser().parse_args()
+        print(f'Args: {self.args}')
         self.ui.fft_window: RealTimeFFTWindow  # type hinting
-        self.ui.fft_window.initialize_additional_parameters(soundcardlib)
+        self.ui.fft_window.initialize_additional_parameters(self.args, soundcardlib)
         self.ui.fft_window.prepare_for_plotting()
         # defaults
         self.ui.pb_start.setEnabled(False)
@@ -34,7 +42,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # list devices
         self.list_devices()
         # connect to device
-        # self.ui.cb_input_devices.activated.connect(self.connect_to_device)
+        self.ui.cb_input_devices.activated.connect(self.connect_to_device)
         # self.ui.cb_output_devices.activated.connect(self.connect_to_device) # TODO
         self.set_fft_window_title()
 
@@ -42,11 +50,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.pb_start.clicked.connect(self.play_button_callback)
         self.ui.pb_start.setFocusPolicy(Qt.NoFocus)  # so it's not pressed with space
         return
-
+    
     def connect_to_device(self):
-        device_name = self.ui.cb_devices.currentText()
-        self.ui.fft_window.connect_to_device(device_name)
-        self.ui.cb_devices.setEnabled(False)
+        device_name = self.ui.cb_input_devices.currentText()
+        self.ui.fft_window.connect_to_input_device(device_name)
+        self.ui.cb_input_devices.setEnabled(False)
         self.ui.pb_start.setEnabled(True)
         return
 
@@ -76,9 +84,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 def main():
     app = QtWidgets.QApplication([])  # for NEW versions
     # Setup soundcardlib
-    FS = 16000  # Hz
+    FS = 44100  # Hz
+    # soundcardlib = SoundCardDataSource(
+    #     num_chunks=3, sampling_rate=FS, chunk_size=4 * 1024
+    # )
     soundcardlib = SoundCardDataSource(
-        num_chunks=3, sampling_rate=FS, chunk_size=4 * 1024
+        num_chunks=3, sampling_rate=FS, chunk_size=4*1024
     )
     main_app = MyMainWindow(soundcardlib)
     main_app.show()
