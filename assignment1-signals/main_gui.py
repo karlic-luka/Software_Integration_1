@@ -84,13 +84,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 def main():
     app = QtWidgets.QApplication([])  # for NEW versions
     # Setup soundcardlib
-    FS = 44100  # Hz
+    # FS = 44100  # Hz
+    FS = 16000  # Hz
     # soundcardlib = SoundCardDataSource(
     #     num_chunks=3, sampling_rate=FS, chunk_size=4 * 1024
     # )
     soundcardlib = SoundCardDataSource(
-        num_chunks=3, sampling_rate=FS, chunk_size=4*1024
+        num_chunks=1, sampling_rate=FS, chunk_size=2*1024
     )
+    # MODEL SAMPLE RATE MORA BITI ISTI KAO OD MIKROFONA
     main_app = MyMainWindow(soundcardlib)
     main_app.show()
     sys.exit(app.exec_())
