@@ -102,9 +102,7 @@ class SoundCardDataSource(object):
         for i in range(self.pyaudio.get_device_count()):
             dev = self.pyaudio.get_device_info_by_index(i)
             channels_in = min(dev["maxInputChannels"], 2) # NOTE: edited by Luka - denoiser
-            # channels_in = 1 # NOTE: edited by Luka - denoiser
             channels_out = min(dev["maxOutputChannels"], 2) # NOTE: edited by Luka - denoiser
-            # channels_out = 1 # NOTE: edited by Luka - denoiser
 
             # Check input format
             try:
