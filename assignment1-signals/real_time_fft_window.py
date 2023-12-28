@@ -1,6 +1,6 @@
 import numpy as np
 from PyQt5 import QtCore
-import pyqtgraph as pg  # pip install pyqtgraph
+import pyqtgraph as pg 
 from soundcardlib import SoundCardDataSource
 from misc import rfftfreq, fft_buffer
 
@@ -85,21 +85,17 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):
             None
         """
         self.args = args
-        self.args.device = 'cpu'
         if torch.cuda.is_available():
-            self.args.device = 'cuda'
-
-        self.args.num_threads = 1
-        self.args.num_frames = 4
+            self.args.device = 'cuda' # TODO different requirements.txt for GPU
+        else:
+            self.args.device = 'cpu'
+        self.logger.info(f'Using device: {self.args.device}')
         self.first = True
 
         self.logger.info(f'Args: {args}') 
-        print(f'Args: {args}')
-        print(f'Loading model')
         self.logger.info(f'Loading model')
-        self.model = get_model(args).to(args.device)
+        self.model = get_model(self.args).to(self.args.device)
         self.model.eval()
-        print(f'Model loaded')
         self.logger.info(f'Model loaded')   
         self.streamer = DemucsStreamer(self.model, dry=self.args.dry, num_frames=self.args.num_frames)
         sr_ms = self.model.sample_rate / 1000
@@ -294,7 +290,7 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):
         Retrieves the available input and output audio devices.
 
         Returns:
-            dict: Dictionary containing the available input and output audio devices.
+            dict: Dictionaries containing the available input and output audio devices.
         """
         self.input_devices_dict, self.output_devices_dict = self.soundcardlib.get_available_devices()
         return self.input_devices_dict, self.output_devices_dict
@@ -311,6 +307,7 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):
             None
         """
         input_dev_index = self.input_devices_dict[input_name]
+        self.logger.info(f'Connecting to input device')
         self.soundcardlib.connect_and_start_streaming(input_dev_index)
         output_index = self.output_devices_dict[output_name]
         self.output_stream = sd.OutputStream(
@@ -352,7 +349,10 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):
         self.logger.info(f'Dtype: {self.in_data.dtype}')
         self.logger.info(f'Min and Max: {np.min(self.in_data)}, {np.max(self.in_data)}')
 
-        output_path = os.path.join(os.getcwd(), "assignment1-signals", "outputs")
+        output_path = os.path.join(os.getcwd(), "outputs")
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+        
         self.logger.info('Trying to save audio')
         sf.write(os.path.join(output_path, "input.wav"), self.in_data, self.model.sample_rate)
         sf.write(os.path.join(output_path, "output.wav"), self.out_data, self.model.sample_rate)

@@ -170,6 +170,16 @@
          </property>
         </widget>
        </item>
+       <item row="2" column="0">
+        <widget class="QPushButton" name="pb_stop_audio">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Stop Audio</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>
@@ -181,7 +191,7 @@
      <x>0</x>
      <y>0</y>
      <width>1129</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>

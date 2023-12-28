@@ -45,6 +45,21 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.setupUi(self)
 
         self.args = get_parser().parse_args()
+        self.create_logger()
+        self.logger.info("Initializing GUI...")
+        self.ui.fft_window: RealTimeFFTWindow  # type hinting
+        self.ui.fft_window.initialize_additional_parameters(self.args, soundcardlib, self.logger)
+        self.ui.fft_window.prepare_for_plotting()
+        self.initialize_default_gui_settings_and_callbacks()
+        self.logger.info("GUI initialized.")
+        return
+    
+    def create_logger(self):
+        """
+        Create a logger object and configure it with the necessary settings.
+        The logger will save log messages to a file in the 'logs' directory,
+        with the name based on the current date and time.
+        """
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         # save the log file to the logs directory with the name after the current date and time
@@ -55,47 +70,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
         self.logger.addHandler(self.handler)
         self.logger.info(f'Arguments: {self.args}')
-
-        self.ui.fft_window: RealTimeFFTWindow  # type hinting
-        self.ui.fft_window.initialize_additional_parameters(self.args, soundcardlib, self.logger)
-        self.ui.fft_window.prepare_for_plotting()
-        # defaults
-        self.ui.pb_start.setEnabled(False)
-        self.ui.pb_load_files.setEnabled(True)
-        self.ui.cb_input_devices.setEnabled(True)
-        self.ui.cb_output_devices.setEnabled(True)
-        # Set default values
-        self.ui.cb_input_devices.addItem(INPUT_DEVICE_STRING)
-        self.ui.cb_output_devices.addItem(OUTPUT_DEVICE_STRING)
-        self.change_noise_state() # set default noise state
-
-        # list devices
-        self.list_devices()
-        # Set the default index to 0
-        self.ui.cb_input_devices.setCurrentIndex(0)
-        self.ui.cb_output_devices.setCurrentIndex(0)
-        # wait for user to select input and output device
-        self.ui.cb_input_devices.activated.connect(self.connect_to_device)
-        self.ui.cb_output_devices.activated.connect(self.connect_to_device)
-
-        self.ui.pb_load_files.clicked.connect(self.load_and_play_files)
-        self.ui.slider_noise_db.valueChanged.connect(self.change_noise_state)
-        self.set_fft_window_title()
-
-        # button actions
-        self.ui.cb_noise.stateChanged.connect(self.change_noise_state)
-        self.ui.pb_start.clicked.connect(self.play_button_callback)
-        self.ui.pb_save.clicked.connect(self.save_button_callback)
-        self.ui.pb_start.setFocusPolicy(Qt.NoFocus)  # so it's not pressed with space
-        self.ui.slider_noise_db.setFocusPolicy(Qt.NoFocus)  
-        self.ui.cb_noise.setFocusPolicy(Qt.NoFocus)  
-        self.ui.pb_load_files.setFocusPolicy(Qt.NoFocus)
-        self.ui.pb_save.setFocusPolicy(Qt.NoFocus)  
-        self.ui.le_noise_in_db.setFocusPolicy(Qt.NoFocus)
-        self.ui.pb_load_files.setStyleSheet("color: blue") 
-        self.ui.pb_save.setStyleSheet("color: blue")
-        self.ui.pb_start.setStyleSheet("color: blue")  
-
         return
     
     def connect_to_device(self):
@@ -115,6 +89,60 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.ui.cb_noise.setEnabled(False)
             self.ui.slider_noise_db.setEnabled(False)
         return
+    
+    def initialize_default_gui_settings_and_callbacks(self):
+        """
+        Initializes the default GUI settings and callbacks.
+
+        This function sets the initial state of various GUI elements and connects them to their respective callbacks.
+        It also sets default values for input and output devices, lists available devices, and sets the default index.
+
+        Parameters:
+        - self: The instance of the class.
+
+        Returns:
+        None
+        """
+        # defaults
+        self.logger.info("Initializing default GUI settings and callbacks...")
+        self.ui.pb_start.setEnabled(False)
+        self.ui.pb_load_files.setEnabled(True)
+        self.ui.cb_input_devices.setEnabled(True)
+        self.ui.cb_output_devices.setEnabled(True)
+        # Set default values
+        self.ui.cb_input_devices.addItem(INPUT_DEVICE_STRING)
+        self.ui.cb_output_devices.addItem(OUTPUT_DEVICE_STRING)
+        self.change_noise_state() # set default noise state
+
+        # list devices
+        self.list_devices()
+        # Set the default index to 0
+        self.ui.cb_input_devices.setCurrentIndex(0)
+        self.ui.cb_output_devices.setCurrentIndex(0)
+
+        # wait for user to select input and output device
+        self.ui.cb_input_devices.activated.connect(self.connect_to_device)
+        self.ui.cb_output_devices.activated.connect(self.connect_to_device)
+
+        self.ui.pb_load_files.clicked.connect(self.load_and_play_files)
+        self.ui.slider_noise_db.valueChanged.connect(self.change_noise_state)
+        self.set_fft_window_title()
+        self.ui.cb_noise.stateChanged.connect(self.change_noise_state)
+        self.ui.pb_start.clicked.connect(self.play_button_callback)
+        self.ui.pb_save.clicked.connect(self.save_button_callback)
+        self.ui.pb_stop_audio.clicked.connect(self.stop_audio_callback)
+
+        # set focus policy
+        self.ui.pb_start.setFocusPolicy(Qt.NoFocus) 
+        self.ui.slider_noise_db.setFocusPolicy(Qt.NoFocus)  
+        self.ui.cb_noise.setFocusPolicy(Qt.NoFocus)  
+        self.ui.pb_load_files.setFocusPolicy(Qt.NoFocus)
+        self.ui.pb_save.setFocusPolicy(Qt.NoFocus)  
+        self.ui.le_noise_in_db.setFocusPolicy(Qt.NoFocus)
+        self.ui.pb_load_files.setStyleSheet("color: blue") 
+        self.ui.pb_save.setStyleSheet("color: blue")
+        self.ui.pb_start.setStyleSheet("color: blue")
+        return
 
     def play_button_callback(self):
         """
@@ -122,6 +150,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         """
         self.ui.fft_window.paused = not self.ui.fft_window.paused
         self.set_fft_window_title()
+        return
+    
+    def stop_audio_callback(self):
+        """
+        Stops the audio playback.
+        """
+        if self.audio_wav:
+            self.audio_wav.stop()
+            self.ui.pb_stop_audio.setEnabled(False)
         return
     
     def save_button_callback(self):
@@ -162,10 +199,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         Opens a file dialog to select a .wav file, loads it as an audio segment,
         and plays the audio.
         """
+        self.ui.pb_stop_audio.setEnabled(True)
         file_path, _ = QFileDialog.getOpenFileName(self, "Open .wav file", "assignment1-signals/outputs", "WAV Files (*.wav)")
         if file_path:
-            audio = AudioSegment.from_wav(file_path)
-            play(audio)
+            self.audio_wav = AudioSegment.from_wav(file_path)
+            play(self.audio_wav)
+            
         # TODO connect to update method to plot the file
         
 
@@ -186,10 +225,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         if self.ui.cb_noise.isChecked():
             self.ui.fft_window.add_noise = True
-            self.ui.le_noise_in_db.setStyleSheet("color: red")  # Set color to red
+            self.ui.le_noise_in_db.setStyleSheet("color: red")  
         else:
             self.ui.fft_window.add_noise = False
-            self.ui.le_noise_in_db.setStyleSheet("color: black")  # Set color to black
+            self.ui.le_noise_in_db.setStyleSheet("color: black")  
         self.logger.info(f'Noise state: {self.ui.fft_window.add_noise}')
         self.logger.info(f'SNR: {self.ui.fft_window.noise_level} dB')
         return
