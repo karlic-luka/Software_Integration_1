@@ -28,6 +28,7 @@ The GUI is built using PyQt5 and pyqtgraph, and it relies on external libraries 
 7. Click the **"Listen to Audio"** to load "input.wav" and "output.wav" files.
    - input.wav contains *original* signal recorded with the microphone + the AWGN
    - output.wav contains *denoised* signal
+8. In the **asignment1-signals/logs** folder you can find the .log file for each run of the application
 
 ## Dependencies
 - python 3.8.18
