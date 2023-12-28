@@ -126,7 +126,7 @@
        <item row="1" column="0">
         <widget class="QPushButton" name="pb_load_files">
          <property name="text">
-          <string>Load Files</string>
+          <string>Listen to Audio</string>
          </property>
         </widget>
        </item>
