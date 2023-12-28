@@ -404,4 +404,20 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):
         self.in_data = []
         self.out_data = []
         return
+    
+    def on_restart_button(self):
+        """
+        Handles the actions to be performed when the restart button is clicked.
+
+        Returns:
+            None
+        """
+        self.paused = True
+        self.logger.info(f'Clicked on restart button')
+        self.in_data = []
+        self.out_data = []
+
+        self.p1.setTitle("Restarted. You can choose a different noise level.")
+        self.logger.info(f'Restarted')
+        return
         

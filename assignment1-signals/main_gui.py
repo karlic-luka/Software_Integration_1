@@ -112,7 +112,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # Set default values
         self.ui.cb_input_devices.addItem(INPUT_DEVICE_STRING)
         self.ui.cb_output_devices.addItem(OUTPUT_DEVICE_STRING)
-        self.change_noise_state() # set default noise state
+        self.change_noise_callback() # set default noise state
 
         # list devices
         self.list_devices()
@@ -125,12 +125,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.cb_output_devices.activated.connect(self.connect_to_device)
 
         self.ui.pb_load_files.clicked.connect(self.load_and_play_files)
-        self.ui.slider_noise_db.valueChanged.connect(self.change_noise_state)
+        self.ui.slider_noise_db.valueChanged.connect(self.change_noise_callback)
         self.set_fft_window_title()
-        self.ui.cb_noise.stateChanged.connect(self.change_noise_state)
+        self.ui.cb_noise.stateChanged.connect(self.change_noise_callback)
         self.ui.pb_start.clicked.connect(self.play_button_callback)
         self.ui.pb_save.clicked.connect(self.save_button_callback)
         self.ui.pb_stop_audio.clicked.connect(self.stop_audio_callback)
+        self.ui.pb_restart.clicked.connect(self.restart_callback)
 
         # set focus policy
         self.ui.pb_start.setFocusPolicy(Qt.NoFocus) 
@@ -139,6 +140,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.pb_load_files.setFocusPolicy(Qt.NoFocus)
         self.ui.pb_save.setFocusPolicy(Qt.NoFocus)  
         self.ui.le_noise_in_db.setFocusPolicy(Qt.NoFocus)
+        self.ui.pb_restart.setFocusPolicy(Qt.NoFocus)
         self.ui.pb_load_files.setStyleSheet("color: blue") 
         self.ui.pb_save.setStyleSheet("color: blue")
         self.ui.pb_start.setStyleSheet("color: blue")
@@ -166,6 +168,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         Callback function for the save button.
         """
         self.ui.fft_window.on_save_button()
+        return
+    
+    def restart_callback(self):
+        """
+        Callback function for the restart button.
+        """
+        self.ui.cb_noise.setEnabled(True)
+        self.ui.slider_noise_db.setEnabled(True)
+        self.ui.fft_window.on_restart_button()
         return
 
     def set_fft_window_title(self):
@@ -208,7 +219,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # TODO connect to update method to plot the file
         
 
-    def change_noise_state(self):
+    def change_noise_callback(self):
         """
         Change the state of noise and update the noise level in the GUI.
 
