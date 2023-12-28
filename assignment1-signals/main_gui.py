@@ -49,6 +49,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.logger.setLevel(logging.INFO)
         # save the log file to the logs directory with the name after the current date and time
         logs_path = os.path.join(os.getcwd(), "assignment1-signals", "logs")
+        if not os.path.exists(logs_path):
+            os.makedirs(logs_path)
         self.handler = logging.FileHandler(os.path.join(logs_path, f'{time.strftime("%Y%m%d-%H%M%S")}_denoiser.log'))
         self.handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
         self.logger.addHandler(self.handler)
