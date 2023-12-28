@@ -12,7 +12,33 @@ import os
 import soundfile as sf
 import sounddevice as sd
 
-class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
+
+class RealTimeFFTWindow(pg.GraphicsLayoutWidget):
+    """
+    A real-time FFT window for audio signal processing.
+
+    This class provides a graphical interface for real-time audio signal processing,
+    including denoising using a pre-trained model. It uses PyQt5 and pyqtgraph for the GUI,
+    and relies on external libraries such as numpy, torch, and soundfile for audio processing.
+
+    Attributes:
+        initialized_other_parameters (bool): Flag indicating whether additional parameters have been initialized.
+        noise (numpy.ndarray): Pre-generated noise for adding artificial noise to the audio signal.
+
+    Methods:
+        initialize_additional_parameters: Initializes additional parameters required for audio processing.
+        setup_denoiser_model: Sets up the denoiser model for audio denoising.
+        prepare_for_plotting: Prepares the GUI for plotting audio signals.
+        reset_ranges: Resets the ranges of the plots.
+        add_awgn_in_db: Adds artificial white Gaussian noise to the audio signal.
+        update: Updates the plots and performs audio processing.
+        keyPressEvent: Handles key press events.
+        get_input_output_devices: Retrieves the available input and output audio devices.
+        connect_to_devices: Connects to the specified input and output audio devices.
+        on_exiting: Handles the actions to be performed when exiting the application.
+        on_save_button: Handles the actions to be performed when the save button is clicked.
+    """
+    
     def __init__(self, parent=None):
         super(RealTimeFFTWindow, self).__init__(parent)
         self.initialized_other_parameters = False
@@ -21,8 +47,17 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
     def initialize_additional_parameters(
         self, args, soundcardlib: SoundCardDataSource = None, logger=None
     ):
-        # helper function so I don't have to change the .py file generated with pyuic5
-        # every time when I change the .ui file
+        """
+        Initializes additional parameters required for audio processing.
+
+        Args:
+            args: Additional arguments for setting up the denoiser model.
+            soundcardlib (SoundCardDataSource): Sound card data source for audio input.
+            logger: Logger object for logging messages.
+
+        Returns:
+            None
+        """
         self.soundcardlib = soundcardlib
         self.logger = logger
         self.paused = True
@@ -39,10 +74,22 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         return
     
     def setup_denoiser_model(self, args):
+        """
+        Sets up the denoiser model for audio denoising.
+        If a GPU is available, the model is loaded on the GPU.
+
+        Args:
+            args: Arguments for setting up the denoiser model.
+
+        Returns:
+            None
+        """
         self.args = args
         self.args.device = 'cpu'
-        self.args.num_threads = 1 # If you have DDR3 RAM, setting -t 1 can improve performance.")
-        self.args.dry = 0.04
+        if torch.cuda.is_available():
+            self.args.device = 'cuda'
+
+        self.args.num_threads = 1
         self.args.num_frames = 4
         self.first = True
 
@@ -54,7 +101,6 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.model.eval()
         print(f'Model loaded')
         self.logger.info(f'Model loaded')   
-        # print(f'Model: {self.model}')
         self.streamer = DemucsStreamer(self.model, dry=self.args.dry, num_frames=self.args.num_frames)
         sr_ms = self.model.sample_rate / 1000
         self.logger.info(f"Ready to process audio, total lag: {self.streamer.total_length / sr_ms:.1f}ms.")
@@ -62,6 +108,12 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         return
     
     def prepare_for_plotting(self):
+        """
+        Prepares the GUI for plotting audio signals.
+
+        Returns:
+            None
+        """
         # Setup first plot (time domain)
         pg.setConfigOptions(antialias=True)
         self.p1 = self.addPlot()
@@ -106,6 +158,12 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.show()
 
     def reset_ranges(self):
+        """
+        Resets the ranges of the plots.
+
+        Returns:
+            None
+        """
         self.timeValues = self.soundcardlib.timeValues
         self.freqValues = rfftfreq(len(self.timeValues), 1.0 / self.soundcardlib.fs)
 
@@ -120,6 +178,16 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         return
 
     def add_awgn_in_db(self, audio, target_noise_db):
+        """
+        Adds artificial white Gaussian noise to the audio signal.
+
+        Args:
+            audio (numpy.ndarray): Input audio signal.
+            target_noise_db (float): Target noise level in decibels (dB).
+
+        Returns:
+            numpy.ndarray: Noisy audio signal.
+        """
         signal_power = np.mean(audio ** 2)
         signal_power_db = 10 * np.log10(signal_power)
         noise_power_db = signal_power_db - target_noise_db
@@ -131,7 +199,13 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
     
     
     def update(self):
-        # if spacebar (keypressevent), we don't continue
+        """
+        Updates the plots and performs audio processing.
+
+        Returns:
+            None
+        """
+        # if spacebar (keypressevent), we don't continue        
         if not self.initialized_other_parameters or self.paused or self.exit:
             return
 
@@ -160,11 +234,9 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.in_data.append(data)
         self.logger.info(f'Getting buffer + adding noise time: {time.time() - start1:.4f}s')
 
-        # self.logger.info(f'Audio data shape: {data.shape}')
         start2 = time.time()
         weighting = np.exp(self.timeValues / self.timeValues[-1])
         Pxx, fhat = fft_buffer(weighting * data[:, 0])
-        # ifft = ifft_buffer(fhat, threshold=-1)
         if self.downsample:
             downsample_args = dict(
                 autoDownsample=False, downsampleMethod="subsample", downsample=10
@@ -173,7 +245,6 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
             downsample_args = dict(autoDownsample=True)
         self.logger.info(f'FFT time: {time.time() - start2:.4f}s')
         start3 = time.time()
-        # self.ts2.setData(x=self.timeValues, y=ifft, **downsample_args)
         self.ts.setData(x=self.timeValues, y=data[:, 0], **downsample_args)
         self.spec.setData(x=self.freqValues, y=(20 * np.log10(Pxx)))
         self.logger.info(f'Plotting time: {time.time() - start3:.4f}s')
@@ -182,7 +253,6 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.first = False
      
         audio_frame = torch.from_numpy(data[:, 0]).to("cpu").float()
-        # start = time.time()
         with torch.no_grad():
             denoised = self.streamer.feed(audio_frame[None])[0]
 
@@ -198,6 +268,15 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
 
 
     def keyPressEvent(self, event):
+        """
+        Handles key press events.
+
+        Args:
+            event: Key press event.
+
+        Returns:
+            None
+        """
         text = event.text()
         # Use spacebar to pause the graph
         if text == " ":
@@ -211,17 +290,33 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
             super(RealTimeFFTWindow, self).keyPressEvent(event)
 
     def get_input_output_devices(self):
+        """
+        Retrieves the available input and output audio devices.
+
+        Returns:
+            dict: Dictionary containing the available input and output audio devices.
+        """
         self.input_devices_dict, self.output_devices_dict = self.soundcardlib.get_available_devices()
         return self.input_devices_dict, self.output_devices_dict
 
     def connect_to_devices(self, input_name: str, output_name: str):
+        """
+        Connects to the specified input and output audio devices.
+
+        Args:
+            input_name (str): Name of the input audio device.
+            output_name (str): Name of the output audio device.
+
+        Returns:
+            None
+        """
         input_dev_index = self.input_devices_dict[input_name]
         self.soundcardlib.connect_and_start_streaming(input_dev_index)
         output_index = self.output_devices_dict[output_name]
         self.output_stream = sd.OutputStream(
             samplerate=self.soundcardlib.fs,
             device=output_index,
-            channels=1 # TODO parametrize
+            channels=1
         )
         
         try:
@@ -237,6 +332,13 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         return
     
     def on_exiting(self):
+        """
+        Handles the actions to be performed when exiting the application.
+
+        Returns:
+            None
+        """
+        self.exit = True
         self.logger.info(f'Exiting')
         self.in_data = np.concatenate(self.in_data)
         self.in_data = np.clip(self.in_data, -1.0, 1.0)
@@ -256,12 +358,30 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         sf.write(os.path.join(output_path, "output.wav"), self.out_data, self.model.sample_rate)
         self.logger.info(f'Input audio saved to {os.path.join(os.getcwd(), output_path)}')
         self.logger.info(f'Exiting')
+        self.logger.info(f'Closing output stream')
+        # Close the audio stream
+        if self.stream is not None:
+            self.stream.stop_stream()
+            self.stream.close()
+
+        self.logger.info(f'Closing PyAudio instance')
+        # Close the PyAudio instance
+        if self.pyaudio is not None:
+            self.pyaudio.terminate()
+        self.logger.info(f'PyAudio instance closed')
         self.logger.removeHandler(self.handler)
         self.logger.handlers = []
         self.logger = None
+        QtCore.QCoreApplication.exit(0)
         return
     
     def on_save_button(self):
+        """
+        Handles the actions to be performed when the save button is clicked.
+
+        Returns:
+            None
+        """
         self.paused = True
         self.logger.info(f'Clicked on save button')
         self.in_data = np.concatenate(self.in_data)

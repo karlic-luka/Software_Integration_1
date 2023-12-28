@@ -116,7 +116,7 @@ class Ui_MainWindow(object):
         self.groupBox.setTitle(_translate("MainWindow", "MENU"))
         self.pb_start.setText(_translate("MainWindow", "Start/Stop"))
         self.pb_save.setText(_translate("MainWindow", "Save Audio"))
-        self.pb_load_files.setText(_translate("MainWindow", "Load Files"))
+        self.pb_load_files.setText(_translate("MainWindow", "Listen to Audio"))
         self.cb_noise.setText(_translate("MainWindow", "Add AWGN"))
         self.label_output_devices.setText(_translate("MainWindow", "Output devices"))
         self.label_input_devices.setText(_translate("MainWindow", "Input devices"))

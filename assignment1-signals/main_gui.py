@@ -1,3 +1,8 @@
+"""
+This module contains the main GUI application for the signal processing assignment.
+It utilizes PyQt5 for the graphical user interface and interacts with other modules
+such as soundcardlib, baseline_gui_v3, and real_time_fft_window.
+"""
 import sys, pdb, os
 
 import warnings
@@ -26,6 +31,13 @@ OUTPUT_DEVICE_STRING = "Select output device"
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, soundcardlib, parent=None):
+        """
+        Initializes the main window of the GUI.
+
+        Args:
+            soundcardlib: The soundcard library used for audio processing.
+            parent: The parent widget (default is None).
+        """
         super(MyMainWindow, self).__init__(parent)
         QMainWindow.__init__(self, parent)
 
@@ -85,6 +97,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return
     
     def connect_to_device(self):
+        """
+        Connects to the input and output devices selected in the GUI.
+        Disables the input and output device selection comboboxes, enables the start button,
+        and disables the noise combobox and noise slider.
+        """
         input_device_name = self.ui.cb_input_devices.currentText()
         output_device_name = self.ui.cb_output_devices.currentText()
 
@@ -98,20 +115,35 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return
 
     def play_button_callback(self):
+        """
+        Toggles the paused state of the FFT window and updates the title.
+        """
         self.ui.fft_window.paused = not self.ui.fft_window.paused
         self.set_fft_window_title()
         return
     
     def save_button_callback(self):
+        """
+        Callback function for the save button.
+        """
         self.ui.fft_window.on_save_button()
         return
 
     def set_fft_window_title(self):
+        """
+        Sets the title of the FFT window based on the current state.
+
+        Returns:
+            None
+        """
         title_text = "PAUSED" if self.ui.fft_window.paused else ""
         self.ui.fft_window.p1.setTitle(title_text)
         return
 
     def list_devices(self):
+        """
+        Retrieves the input and output devices and populates the corresponding combo boxes in the GUI.
+        """
         input_devices, output_devices = self.ui.fft_window.get_input_output_devices()
         self.logger.info(f'Input devices: {input_devices}')
         print("input devices: ", input_devices)
@@ -124,18 +156,32 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return
     
     def load_and_play_files(self):
+        """
+        Opens a file dialog to select a .wav file, loads it as an audio segment,
+        and plays the audio.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self, "Open .wav file", "assignment1-signals/outputs", "WAV Files (*.wav)")
         if file_path:
             audio = AudioSegment.from_wav(file_path)
             play(audio)
-        # connect play to update method of the fft window
+        # TODO connect to update method to plot the file
         
 
     def change_noise_state(self):
+        """
+        Change the state of noise and update the noise level in the GUI.
+
+        This method is called when the user changes the noise level using the slider
+        or toggles the noise checkbox. It updates the noise level in the FFT window
+        and displays it in the GUI.
+
+        Returns:
+            None
+        """
         self.ui.fft_window.noise_level = int(self.ui.slider_noise_db.value())
         noise_text = f'SNR: {self.ui.fft_window.noise_level} dB'
         self.ui.le_noise_in_db.setText(noise_text)
-        
+
         if self.ui.cb_noise.isChecked():
             self.ui.fft_window.add_noise = True
             self.ui.le_noise_in_db.setStyleSheet("color: red")  # Set color to red
@@ -150,15 +196,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 def main():
     app = QtWidgets.QApplication([])  # for NEW versions
     # Setup soundcardlib
-    FS = 16000  # Hz
+    FS = 16000  # NOTE in Hz; sample rate from microphone should be 16kHz - the same as model was trained on
     soundcardlib = SoundCardDataSource(
         num_chunks=1, sampling_rate=FS, chunk_size=2*1024
     )
-    # NOTE sample rate from microphone should be 16kHz - the same as model was trained on
     main_app = MyMainWindow(soundcardlib)
     main_app.show()
     sys.exit(app.exec_())
-
 
 if __name__ == "__main__":
     main()
