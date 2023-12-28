@@ -1,0 +1,11 @@
+denoiser==0.1.5
+matplotlib==3.7.4
+numpy==1.24.4
+PyAudio==0.2.14
+pydub==0.25.1
+PyQt5==5.15.10
+PyQt5_sip==12.13.0
+pyqtgraph==0.13.3
+sounddevice==0.4.6
+soundfile==0.12.1
+torch==1.8.0
