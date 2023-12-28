@@ -1,25 +1,25 @@
-import os, sys, math, pdb
+import sys, pdb, os
 
 import warnings
 
 warnings.filterwarnings("ignore")
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QColor, QIcon
-from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QMessageBox, QWidget
+from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from PyQt5.uic import loadUi
 
 from soundcardlib import SoundCardDataSource
 from baseline_gui_v3 import Ui_MainWindow
 from real_time_fft_window import RealTimeFFTWindow
 
-from denoiser.pretrained import get_model
-from denoiser.demucs import DemucsStreamer
 from misc import get_parser
 
 from pydub import AudioSegment
 from pydub.playback import play
+
+import logging
+import time
 
 INPUT_DEVICE_STRING = "Select input device"
 OUTPUT_DEVICE_STRING = "Select output device"
@@ -33,9 +33,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.setupUi(self)
 
         self.args = get_parser().parse_args()
-        print(f'Args: {self.args}')
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        # save the log file to the logs directory with the name after the current date and time
+        logs_path = os.path.join(os.getcwd(), "assignment1-signals", "logs")
+        self.handler = logging.FileHandler(os.path.join(logs_path, f'{time.strftime("%Y%m%d-%H%M%S")}_denoiser.log'))
+        self.handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
+        self.logger.addHandler(self.handler)
+        self.logger.info(f'Arguments: {self.args}')
+
         self.ui.fft_window: RealTimeFFTWindow  # type hinting
-        self.ui.fft_window.initialize_additional_parameters(self.args, soundcardlib)
+        self.ui.fft_window.initialize_additional_parameters(self.args, soundcardlib, self.logger)
         self.ui.fft_window.prepare_for_plotting()
         # defaults
         self.ui.pb_start.setEnabled(False)
@@ -74,7 +82,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.pb_save.setStyleSheet("color: blue")
         self.ui.pb_start.setStyleSheet("color: blue")  
 
-
         return
     
     def connect_to_device(self):
@@ -106,7 +113,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     def list_devices(self):
         input_devices, output_devices = self.ui.fft_window.get_input_output_devices()
+        self.logger.info(f'Input devices: {input_devices}')
         print("input devices: ", input_devices)
+        self.logger.info(f'Output devices: {output_devices}')
         print("output devices: ", output_devices)
         for device_name in input_devices.keys():
             self.ui.cb_input_devices.addItem(device_name)
@@ -119,6 +128,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if file_path:
             audio = AudioSegment.from_wav(file_path)
             play(audio)
+        # connect play to update method of the fft window
         
 
     def change_noise_state(self):
@@ -132,6 +142,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.ui.fft_window.add_noise = False
             self.ui.le_noise_in_db.setStyleSheet("color: black")  # Set color to black
+        self.logger.info(f'Noise state: {self.ui.fft_window.add_noise}')
+        self.logger.info(f'SNR: {self.ui.fft_window.noise_level} dB')
         return
 
 

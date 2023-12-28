@@ -1,22 +1,16 @@
-import sys
 import numpy as np
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5 import QtCore
 import pyqtgraph as pg  # pip install pyqtgraph
 from soundcardlib import SoundCardDataSource
-from misc import rfftfreq, fft_buffer, ifft_buffer
+from misc import rfftfreq, fft_buffer
 
 import torch
-import torchaudio
-from denoiser.pretrained import add_model_flags, get_model
+from denoiser.pretrained import get_model
 from denoiser.demucs import DemucsStreamer
-from denoiser.utils import bold
-from denoiser.dsp import convert_audio
 import time
-import logging
 import os
 import soundfile as sf
 import sounddevice as sd
-import matplotlib.pyplot as plt 
 
 class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
     def __init__(self, parent=None):
@@ -25,24 +19,17 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.noise = np.random.normal(0, 1, size=(10000, 1)).astype(np.float32) # pre-generate noise
 
     def initialize_additional_parameters(
-        self, args, soundcardlib: SoundCardDataSource = None
+        self, args, soundcardlib: SoundCardDataSource = None, logger=None
     ):
         # helper function so I don't have to change the .py file generated with pyuic5
         # every time when I change the .ui file
         self.soundcardlib = soundcardlib
+        self.logger = logger
         self.paused = True
         self.downsample = True
         self.exit = False
         self.add_noise = False
         self.noise_level = 0 # dB
-
-        self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
-        # save the log file to the logs directory with the name after the current date and time
-        logs_path = os.path.join(os.getcwd(), "assignment1-signals", "logs")
-        self.handler = logging.FileHandler(os.path.join(logs_path, f'{time.strftime("%Y%m%d-%H%M%S")}_denoiser.log'))
-        self.handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
-        self.logger.addHandler(self.handler)
         self.logger.info(f'Initializing denoiser')
 
         self.setup_denoiser_model(args)
@@ -59,18 +46,19 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.args.num_frames = 4
         self.first = True
 
+        self.logger.info(f'Args: {args}') 
         print(f'Args: {args}')
         print(f'Loading model')
+        self.logger.info(f'Loading model')
         self.model = get_model(args).to(args.device)
         self.model.eval()
         print(f'Model loaded')
+        self.logger.info(f'Model loaded')   
         # print(f'Model: {self.model}')
         self.streamer = DemucsStreamer(self.model, dry=self.args.dry, num_frames=self.args.num_frames)
         sr_ms = self.model.sample_rate / 1000
+        self.logger.info(f"Ready to process audio, total lag: {self.streamer.total_length / sr_ms:.1f}ms.")
         print(f"Ready to process audio, total lag: {self.streamer.total_length / sr_ms:.1f}ms.")
-        
-        # threading.Thread(target=self.read_buffer).start()
-        # threading.Thread(target=self.denoise, args=(self.streamer,)).start()
         return
     
     def prepare_for_plotting(self):
@@ -94,7 +82,7 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
             pen=(50, 100, 200), brush=(50, 100, 200), fillLevel=-100
         )
 
-        # setup third plot (inverse fft)
+        # setup third plot (original vs noisy data)
         self.nextRow()
         self.p3 = self.addPlot()
         self.p3.setLabel("bottom", "Time", "s")
@@ -160,10 +148,13 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
             try:
                 data = self.add_awgn_in_db(data, self.noise_level)
                 self.noisy_signal_plot.setData(self.timeValues, data[:, 0])  # Update the noisy signal plot
+                self.logger.info(f'Added AWGN. SNR: {self.noise_level} dB')
             except Exception as e:
                 print(f'Error while trying to add AWgn: {e}')
                 self.logger.info(f'Error while trying to add AWgn: {e}')
                 return
+        else:
+            self.logger.info(f'No AWGN added')
 
         self.logger.info(f'Adding noise time: {time.time() - start1:.4f}s')
         self.in_data.append(data)
@@ -204,8 +195,6 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.logger.info(f'Inference time: {time.time() - start4:.4f}s')
         self.logger.info(f'Denoised audio shape: {denoised.shape}')
         self.logger.info(f'---------------------------------------------------------')
-        # print(f'Inference time: {time.time() - start:.2f}s')
-        # print(f'Denoised audio shape: {denoised.shape}')
 
 
     def keyPressEvent(self, event):
@@ -237,10 +226,12 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         
         try:
             self.output_stream.start()
+            self.logger.info(f'Using output device: {output_name}')
+            self.logger.info(f'Output stream started')
             print(f'Using output device: {output_name}')
-            print(f'Using output index: {output_index}')
         except Exception as e:
             print(f'Error: {e}')
+            self.logger.info('Error: {e}')
             return
         self.paused = True
         return
@@ -264,10 +255,6 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         sf.write(os.path.join(output_path, "input.wav"), self.in_data, self.model.sample_rate)
         sf.write(os.path.join(output_path, "output.wav"), self.out_data, self.model.sample_rate)
         self.logger.info(f'Input audio saved to {os.path.join(os.getcwd(), output_path)}')
-        plt.plot(self.in_data, label='input', color='blue')
-        plt.plot(self.out_data, label='output', color='red')
-        plt.legend()
-        plt.show()
         self.logger.info(f'Exiting')
         self.logger.removeHandler(self.handler)
         self.logger.handlers = []
@@ -296,9 +283,5 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.logger.info(f'Input audio saved to {os.path.join(os.getcwd(), output_path)}')
         self.in_data = []
         self.out_data = []
-        plt.plot(self.in_data, label='input', color='blue')
-        plt.plot(self.out_data, label='output', color='red')
-        plt.legend()
-        plt.show()
         return
         
