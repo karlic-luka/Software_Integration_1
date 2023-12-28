@@ -4,10 +4,6 @@ import numpy as np
 import pyaudio
 
 
-# def data_to_array(data, channels):
-#     return (np.frombuffer(data, dtype=np.int16)
-#             .reshape((-1, channels))
-#             .astype(float) / 2**15)
 def data_to_array(data, channels):
     return np.frombuffer(data, dtype=np.float32).reshape((-1, channels)).astype(float)
 
@@ -102,12 +98,15 @@ class SoundCardDataSource(object):
     def get_available_devices(self):
         input_devices_dict = {}
         output_devices_dict = {}
-        # list output devices
-        
+
         for i in range(self.pyaudio.get_device_count()):
             dev = self.pyaudio.get_device_info_by_index(i)
             channels_in = min(dev["maxInputChannels"], 2) # NOTE: edited by Luka - denoiser
-            # print(f'Index: {i}, Name: {dev["name"]}')
+            # channels_in = 1 # NOTE: edited by Luka - denoiser
+            channels_out = min(dev["maxOutputChannels"], 2) # NOTE: edited by Luka - denoiser
+            # channels_out = 1 # NOTE: edited by Luka - denoiser
+
+            # Check input format
             try:
                 if self.pyaudio.is_format_supported(
                     rate=self.fs,
@@ -118,8 +117,10 @@ class SoundCardDataSource(object):
                     input_devices_dict[dev["name"]] = i
             except ValueError:
                 print(f'INPUT: Index: {i}, Name: {dev["name"]} (not supported)')
+
+            # Check output format
+            print(f'Now checking output device {dev["name"]}')
             try:
-                channels_out = min(dev["maxOutputChannels"], 2) # NOTE: edited by Luka - denoiser
                 if self.pyaudio.is_format_supported(
                     rate=self.fs,
                     output_device=dev["index"],
@@ -129,5 +130,6 @@ class SoundCardDataSource(object):
                     output_devices_dict[dev["name"]] = i
             except ValueError:
                 print(f'OUTPUT: Index: {i}, Name: {dev["name"]} (not supported)')
+
         return input_devices_dict, output_devices_dict
     

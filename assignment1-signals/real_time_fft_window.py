@@ -13,8 +13,6 @@ from denoiser.utils import bold
 from denoiser.dsp import convert_audio
 import time
 import logging
-import queue
-import threading
 import os
 import soundfile as sf
 import sounddevice as sd
@@ -24,6 +22,7 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
     def __init__(self, parent=None):
         super(RealTimeFFTWindow, self).__init__(parent)
         self.initialized_other_parameters = False
+        self.noise = np.random.normal(0, 1, size=(10000, 1)).astype(np.float32) # pre-generate noise
 
     def initialize_additional_parameters(
         self, args, soundcardlib: SoundCardDataSource = None
@@ -34,6 +33,8 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.paused = True
         self.downsample = True
         self.exit = False
+        self.add_noise = False
+        self.noise_level = 0 # dB
 
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
@@ -42,21 +43,19 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.handler = logging.FileHandler(os.path.join(logs_path, f'{time.strftime("%Y%m%d-%H%M%S")}_denoiser.log'))
         self.handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
         self.logger.addHandler(self.handler)
+        self.logger.info(f'Initializing denoiser')
 
         self.setup_denoiser_model(args)
+        self.logger.info('Denoiser model setup done')
         self.out_data = []
         self.in_data = []
         return
     
     def setup_denoiser_model(self, args):
         self.args = args
-        # self.args.in_ = 8
-        self.args.in_ = 2 # TODO remove - testing purposes
-        self.args.out = 4
         self.args.device = 'cpu'
         self.args.num_threads = 1 # If you have DDR3 RAM, setting -t 1 can improve performance.")
-        # args.dry = 0.04
-        self.args.dry = 0.0 # TODO remove - testing purposes
+        self.args.dry = 0.04
         self.args.num_frames = 4
         self.first = True
 
@@ -100,9 +99,11 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.p3 = self.addPlot()
         self.p3.setLabel("bottom", "Time", "s")
         self.p3.setLabel("left", "Amplitude")
-        self.p3.setTitle("Inverse FFT")
+        self.p3.setTitle("Original signal vs Noisy signal")
         self.p3.setLimits(xMin=0, yMin=-1, yMax=1)
-        self.ts2 = self.p3.plot(pen="y")
+        self.p3.addLegend()
+        self.original_signal_plot = self.p3.plot(pen='y', width=2, name='Original audio')  # Plot for the original signal
+        self.noisy_signal_plot = self.p3.plot(pen='r', width=1, name='Noisy audio') # Plot for the noisy signal
 
         # Data ranges
         self.reset_ranges()
@@ -128,9 +129,19 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.p2.setLabel("left", "Signal power", "dB")
         self.p3.setRange(xRange=(0, self.timeValues[-1]), yRange=(-1, 1))
         self.p3.setLimits(xMin=0, xMax=self.timeValues[-1], yMin=-1, yMax=1)
+        return
 
+    def add_awgn_in_db(self, audio, target_noise_db):
+        signal_power = np.mean(audio ** 2)
+        signal_power_db = 10 * np.log10(signal_power)
+        noise_power_db = signal_power_db - target_noise_db
+        noise_power = 10 ** (noise_power_db / 10)
+        noise = self.noise[:len(audio)] * np.sqrt(noise_power)
+        self.noise = np.roll(self.noise, -len(audio)) # roll the noise so it's different every time
+        noisy_audio = audio + noise
+        return noisy_audio
     
-    # The main function that will update the plot
+    
     def update(self):
         # if spacebar (keypressevent), we don't continue
         if not self.initialized_other_parameters or self.paused or self.exit:
@@ -139,10 +150,24 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         # collect data
         start1 = time.time()
         data = self.soundcardlib.get_buffer()
+
         if np.sum(data[:, 0]) == 0:
+            self.logger.info(f'No audio data')
             return
+        
+        self.original_signal_plot.setData(self.timeValues, data[:, 0])  # Update the original signal plot
+        if self.add_noise:
+            try:
+                data = self.add_awgn_in_db(data, self.noise_level)
+                self.noisy_signal_plot.setData(self.timeValues, data[:, 0])  # Update the noisy signal plot
+            except Exception as e:
+                print(f'Error while trying to add AWgn: {e}')
+                self.logger.info(f'Error while trying to add AWgn: {e}')
+                return
+
+        self.logger.info(f'Adding noise time: {time.time() - start1:.4f}s')
         self.in_data.append(data)
-        self.logger.info(f'Getting buffer time: {time.time() - start1:.4f}s')
+        self.logger.info(f'Getting buffer + adding noise time: {time.time() - start1:.4f}s')
 
         # self.logger.info(f'Audio data shape: {data.shape}')
         start2 = time.time()
@@ -157,20 +182,15 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
             downsample_args = dict(autoDownsample=True)
         self.logger.info(f'FFT time: {time.time() - start2:.4f}s')
         start3 = time.time()
-        self.ts.setData(x=self.timeValues, y=data[:, 0], **downsample_args)
         # self.ts2.setData(x=self.timeValues, y=ifft, **downsample_args)
+        self.ts.setData(x=self.timeValues, y=data[:, 0], **downsample_args)
         self.spec.setData(x=self.freqValues, y=(20 * np.log10(Pxx)))
         self.logger.info(f'Plotting time: {time.time() - start3:.4f}s')
 
-        # denoise
-        # length = len(data[:, 0])
         start4 = time.time()
         self.first = False
-        if np.sum(data[:, 0]) == 0:
-            self.logger.info(f'No audio data')
-            return        
+     
         audio_frame = torch.from_numpy(data[:, 0]).to("cpu").float()
-        # audio_frame = torch.tensor(audio_frame, dtype=torch.float32)
         # start = time.time()
         with torch.no_grad():
             denoised = self.streamer.feed(audio_frame[None])[0]
@@ -205,21 +225,28 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.input_devices_dict, self.output_devices_dict = self.soundcardlib.get_available_devices()
         return self.input_devices_dict, self.output_devices_dict
 
-    def connect_to_input_device(self, device_name: str):
-        dev_index = self.input_devices_dict[device_name]
-        self.soundcardlib.connect_and_start_streaming(dev_index)
-        output_index = 4
+    def connect_to_devices(self, input_name: str, output_name: str):
+        input_dev_index = self.input_devices_dict[input_name]
+        self.soundcardlib.connect_and_start_streaming(input_dev_index)
+        output_index = self.output_devices_dict[output_name]
         self.output_stream = sd.OutputStream(
             samplerate=self.soundcardlib.fs,
             device=output_index,
-            channels=1
+            channels=1 # TODO parametrize
         )
-        self.output_stream.start()
-        self.paused = False
-        self.p1.setTitle("")
+        
+        try:
+            self.output_stream.start()
+            print(f'Using output device: {output_name}')
+            print(f'Using output index: {output_index}')
+        except Exception as e:
+            print(f'Error: {e}')
+            return
+        self.paused = True
         return
     
     def on_exiting(self):
+        self.logger.info(f'Exiting')
         self.in_data = np.concatenate(self.in_data)
         self.in_data = np.clip(self.in_data, -1.0, 1.0)
         self.in_data = (self.in_data * 2**15).astype(np.int16)
@@ -233,29 +260,45 @@ class RealTimeFFTWindow(pg.GraphicsLayoutWidget):  # for NEW versions
         self.logger.info(f'Min and Max: {np.min(self.in_data)}, {np.max(self.in_data)}')
 
         output_path = os.path.join(os.getcwd(), "assignment1-signals", "outputs")
-        
+        self.logger.info('Trying to save audio')
         sf.write(os.path.join(output_path, "input.wav"), self.in_data, self.model.sample_rate)
         sf.write(os.path.join(output_path, "output.wav"), self.out_data, self.model.sample_rate)
+        self.logger.info(f'Input audio saved to {os.path.join(os.getcwd(), output_path)}')
         plt.plot(self.in_data, label='input', color='blue')
         plt.plot(self.out_data, label='output', color='red')
         plt.legend()
         plt.show()
-        self.logger.info(f'Input audio saved to {os.path.join(os.getcwd(), output_path)}')
         self.logger.info(f'Exiting')
         self.logger.removeHandler(self.handler)
         self.logger.handlers = []
         self.logger = None
         return
+    
+    def on_save_button(self):
+        self.paused = True
+        self.logger.info(f'Clicked on save button')
+        self.in_data = np.concatenate(self.in_data)
+        self.in_data = np.clip(self.in_data, -1.0, 1.0)
+        self.in_data = (self.in_data * 2**15).astype(np.int16)
+        self.out_data = np.concatenate(self.out_data)
+        self.out_data = np.clip(self.out_data, -1.0, 1.0)
+        self.out_data = (self.out_data * 2**15).astype(np.int16)
+
+        self.logger.info(f'Input audio shape: {self.in_data.shape}')
+        self.logger.info(f'Output audio shape: {self.out_data.shape}')
+        self.logger.info(f'Dtype: {self.in_data.dtype}')
+        self.logger.info(f'Min and Max: {np.min(self.in_data)}, {np.max(self.in_data)}')
+
+        output_path = os.path.join(os.getcwd(), "assignment1-signals", "outputs")
+        self.logger.info('Trying to save audio')
+        sf.write(os.path.join(output_path, "input.wav"), self.in_data, self.model.sample_rate)
+        sf.write(os.path.join(output_path, "output.wav"), self.out_data, self.model.sample_rate)
+        self.logger.info(f'Input audio saved to {os.path.join(os.getcwd(), output_path)}')
+        self.in_data = []
+        self.out_data = []
+        plt.plot(self.in_data, label='input', color='blue')
+        plt.plot(self.out_data, label='output', color='red')
+        plt.legend()
+        plt.show()
+        return
         
-
-
-if __name__ == "__main__":
-    app = QtWidgets.QApplication(sys.argv)
-    # Setup soundcardlib
-    FS = 44100  # Hz
-    soundcardlib = SoundCardDataSource(
-        num_chunks=3, sampling_rate=FS, chunk_size=4*1024
-    )
-    main_app = RealTimeFFTWindow(soundcardlib)
-    main_app.show()
-    sys.exit(app.exec_())
