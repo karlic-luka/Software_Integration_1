@@ -37,7 +37,7 @@ The GUI is built using PyQt5 and pyqtgraph, and it relies on external libraries 
 ## NOTE
 - https://github.com/facebookresearch/denoiser/tree/main/denoiser
 
-Resources:
+## Resources
 @inproceedings{defossez2020real,
   title={Real Time Speech Enhancement in the Waveform Domain},
   author={Defossez, Alexandre and Synnaeve, Gabriel and Adi, Yossi},
