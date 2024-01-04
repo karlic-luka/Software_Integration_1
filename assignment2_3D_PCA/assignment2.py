@@ -32,9 +32,12 @@ from GUI import Ui_MainWindow
 ## Import the class "OBJ" and "OBJFastV" from the file "OBJ.py"
 from OBJ import OBJ, OBJFastV
 
-TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 10
+from pca_threads import TextureThreadClass, GeometryThreadClass
+
+TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 1
 GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR = 1
 
+# TODO don't forget to call the self.ui.closeEvet = self.closeEvent
 ####################################################################################################
 # The Main Window (GUI) --- TASKS TO DO HERE
 ####################################################################################################
@@ -114,6 +117,27 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.Tslider.setEnabled(False)
         self.ui.Gslider.setEnabled(False)
 
+        # connect threads
+        self.finished_threads_counter = 0
+        self.pca_texture_thread = TextureThreadClass()
+        self.pca_texture_thread.finished.connect(self.PCA_Tex)
+        self.pca_geometry_thread = GeometryThreadClass()
+        self.pca_geometry_thread.finished.connect(self.PCA_Geo)
+
+    def closeEvent(self, event):
+        print(f'Inside closeEvent')
+        if hasattr(self, 'pca_texture_thread'):
+            if self.pca_texture_thread.isRunning():
+                self.pca_texture_thread.requestInterruption()
+                self.pca_texture_thread.stop()
+                self.pca_texture_thread.quit()
+
+        if hasattr(self, 'pca_geometry_thread'):
+            if self.pca_geometry_thread.isRunning():
+                self.pca_geometry_thread.requestInterruption()
+                self.pca_geometry_thread.stop()
+                self.pca_geometry_thread.quit()
+
     def LoadFileClicked(self):
         try:
             # To display a popup window that will be used to select a file (.obj or .png)
@@ -154,18 +178,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             print("Unexpected error:", sys.exc_info()[0])
             raise
 
+    
     def ProcessClicked(self):
 
         # For the bonus task, you will need to call the thread instead of the PCA function
+        
+        self.pca_texture_thread.start()
+        # self.PCA_Tex()  # Run the function to do the PCA on textures
+        # self.b_ProcessDone = True
+        # print("PCA TEX DONE")
+        self.pca_geometry_thread.start()
+        # self.PCA_Geo()  # Run the function to do the PCA on vertices
+        # self.b_Process2Done = True
+        # print("PCA GEO DONE")
+        return
 
-        self.PCA_Tex()  # Run the function to do the PCA on textures
-        self.b_ProcessDone = True
-        print("PCA TEX DONE")
-
-        self.PCA_Geo()  # Run the function to do the PCA on vertices
-        self.b_Process2Done = True
-        print("PCA GEO DONE")
-
+    def on_PCA_is_finished(self):
         self.PCA_done = True
 
         # Unlock and prepare sliders
@@ -188,49 +216,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         Gmax = round(self.Root['models']['WGeo'][1])
         self.ui.Gslider.setRange(Gmin, Gmax)
         return
-
-    def read_and_prepare_texture_models(self, dir=None):
-        # Read the 2 models
-        if dir is None:
-            dir = os.path.join(os.getcwd(), 'assignment2_3D_PCA')
-        textures_pngs = [file for file in os.listdir(dir) if file.endswith('.png')]
-        textures_pngs = [os.path.join(dir, file) for file in textures_pngs]
-        
-        num_models = len(textures_pngs)
-        sample_model = imread(textures_pngs[0])
-        model_size = sample_model.shape
-
-        data = np.zeros((num_models, model_size[0] * model_size[1] * model_size[2]), dtype=np.float32)
-        for i in range(0, num_models):
-            data[i, :] = np.float32(imread(textures_pngs[i]) / 255).flatten()
-            
-        # Calculate the mean
-        mu = np.mean(data, 0)
-        data -= mu
-        return data, mu
     
-    def read_and_prepare_geometry_models(self, dir=None):
-        if dir is None:
-            dir = os.path.join(os.getcwd(), 'assignment2_3D_PCA')
-        geometry_obj_files = [file for file in os.listdir(dir) if file.endswith('.obj')]
-        geometry_obj_files = [os.path.join(dir, file) for file in geometry_obj_files]
-
-        num_models = len(geometry_obj_files)
-        sample_model = OBJFastV(geometry_obj_files[0])
-        num_vertices = len(sample_model.vertices)
-        
-        data = np.zeros((num_models, num_vertices * 3), dtype=np.float32) # 3 for x, y, z
-        for i in range(0, num_models):
-            vertices = OBJFastV(geometry_obj_files[i]).vertices
-            x_coords = [row[0] for row in vertices]
-            y_coords = [row[1] for row in vertices]
-            z_coords = [row[2] for row in vertices]
-            data[i, :] = np.hstack((x_coords, y_coords, z_coords))
-        mu = np.mean(data, 0)
-        data -= mu
-        return data, mu
-    
-    def PCA_Tex(self):
+    def PCA_Tex(self, result: dict):
 
         ###########################################
         # TASK 1 FOR THE ASSIGNMENT
@@ -241,28 +228,32 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         ## Guideline: Read model1.png and model2.png
         ## Do the PCA with the 2 textures, similar to what we did in session 5
-        texture_data, texture_mean = self.read_and_prepare_texture_models()
+        eigenvectors_transposed_flattened = result['eigenvectors_transposed_flattened']
+        texture_mean = result['mean']
+        texture_weights = result['weights']
         try:
-
-            ## >>> ADD PCA CODE BELOW <<<
-            eigenvectors, _, _ = linalg.svd(texture_data.transpose(), full_matrices=False)
-            texture_weights = np.dot(texture_data, eigenvectors)
-
             ## Instead of saving in a yml file, we will save a structure
             ## The variable self.Root['Tex'] is related to the texture
             self.Root['Tex'] = {}
 
             ## Save results
-            self.Root['Tex']['VrTex'] = eigenvectors.transpose().flatten()  # eigenvector variable (transpose/flatten)
+            self.Root['Tex']['VrTex'] = eigenvectors_transposed_flattened  # eigenvector variable (transpose/flatten)
             self.Root['Tex']['XmTex'] = texture_mean # average texture variable
             texture_weights *= TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR
             self.Root['Tex']['WTex'] =  [texture_weights.min(), texture_weights.max()] # min and max weights : format : [min, max]
 
         except Exception as e:
             print('PCA_Tex Error:', e)
+            return
+        self.b_ProcessDone = True
+        self.finished_threads_counter += 1
+        if self.finished_threads_counter == 2:
+            self.on_PCA_is_finished()
+        print(f'COUNTER: {self.finished_threads_counter}')
+        return
 
 
-    def PCA_Geo(self):
+    def PCA_Geo(self, result: dict):
 
         ###########################################
         # TASK 2 FOR THE ASSIGNMENT
@@ -271,27 +262,31 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         ## Guideline: Read model1.obj and model2.obj with the "OBJFastV(...)" function to extract quickly the vertices
         ## Do the PCA with the vertices (similar to the function PCA_Tex(), try to do the same but with the vertices)
         ## Or adapt the code a bit
-        geometry_data, geometry_mean = self.read_and_prepare_geometry_models()
-
+        eigenvectors_transposed = result['eigenvectors_transposed']
+        geometry_mean = result['mean']
+        geometry_weights = result['weights']
         try:
-
-            ## >>> ADD CODE BELOW <<<
-            eigenvectors, _, _ = linalg.svd(geometry_data.transpose(), full_matrices=False)
-            geometry_weights = np.dot(geometry_data, eigenvectors)
-
             # Save results
             ## Instead of saving in a yml file, we will save a structure
             ## The variable self.Root['models'] is related to the geometry
             self.Root['models'] = {}
 
             ## Save results
-            self.Root['models']['VrGeo'] = eigenvectors.transpose()  # eigenvector variable (transpose)
+            self.Root['models']['VrGeo'] = eigenvectors_transposed  # eigenvector variable (transpose)
             self.Root['models']['XmGeo'] = geometry_mean  # average texture variable
             geometry_weights *= GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR
             self.Root['models']['WGeo'] =  [geometry_weights.min(), geometry_weights.max()]  # min and max weights : format : [min, max]
 
         except Exception as e:
             print('PCA_Geo Error:', e)
+            return
+        self.b_Process2Done = True
+        print(f'PCA_Geo DONE.')
+        self.finished_threads_counter += 1
+        print(f'COUNTER: {self.finished_threads_counter}')
+        if self.finished_threads_counter == 2:
+            self.on_PCA_is_finished()
+        return
 
 
     def T_SliderValueChange(self, value):
@@ -339,8 +334,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         self.ui.Tslider.setValue(value)
         # minimum is 0%, 0 is 50%, maximum is 100%
-        percentage = np.abs(round((value - self.ui.Tslider.minimum()) / (self.ui.Tslider.maximum() - self.ui.Tslider.minimum()) * 100))
-        texture_text_label = f'{value} = {percentage}%'
+        percentage = np.abs((value - self.ui.Tslider.minimum()) / (self.ui.Tslider.maximum() - self.ui.Tslider.minimum()) * 100)
+        texture_text_label = f'{value} = {percentage : .1f}%'
         self.ui.textinputtarget.setText(texture_text_label)
 
     def G_SliderValueChange(self, value):
@@ -399,8 +394,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.ui.Gslider.blockSignals(True)
             self.ui.Gslider.setValue(value)
             # minimum is 0%, 0 is 50%, maximum is 100%
-            percentage = np.abs(round((value - self.ui.Gslider.minimum()) / (self.ui.Gslider.maximum() - self.ui.Gslider.minimum()) * 100))
-            model_text_label = f'{value} = {percentage}%'
+            percentage = np.abs((value - self.ui.Gslider.minimum()) / (self.ui.Gslider.maximum() - self.ui.Gslider.minimum()) * 100)
+            model_text_label = f'{value} = {percentage : .1f}%'
             self.ui.textmodels.setText(model_text_label)
             self.ui.Gslider.blockSignals(False)
         except Exception as e:
