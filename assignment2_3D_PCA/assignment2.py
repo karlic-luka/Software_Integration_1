@@ -19,7 +19,7 @@ import numpy as np
 from numpy import linalg
 
 ## scipy libraries
-# from scipy import linalg
+from scipy import linalg
 
 ## imageio libraries (pip install imageio)
 import imageio
@@ -32,6 +32,8 @@ from GUI import Ui_MainWindow
 ## Import the class "OBJ" and "OBJFastV" from the file "OBJ.py"
 from OBJ import OBJ, OBJFastV
 
+TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 10
+GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR = 1
 
 ####################################################################################################
 # The Main Window (GUI) --- TASKS TO DO HERE
@@ -185,7 +187,49 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         Gmin = round(self.Root['models']['WGeo'][0])
         Gmax = round(self.Root['models']['WGeo'][1])
         self.ui.Gslider.setRange(Gmin, Gmax)
+        return
 
+    def read_and_prepare_texture_models(self, dir=None):
+        # Read the 2 models
+        if dir is None:
+            dir = os.path.join(os.getcwd(), 'assignment2_3D_PCA')
+        textures_pngs = [file for file in os.listdir(dir) if file.endswith('.png')]
+        textures_pngs = [os.path.join(dir, file) for file in textures_pngs]
+        
+        num_models = len(textures_pngs)
+        sample_model = imread(textures_pngs[0])
+        model_size = sample_model.shape
+
+        data = np.zeros((num_models, model_size[0] * model_size[1] * model_size[2]), dtype=np.float32)
+        for i in range(0, num_models):
+            data[i, :] = np.float32(imread(textures_pngs[i]) / 255).flatten()
+            
+        # Calculate the mean
+        mu = np.mean(data, 0)
+        data -= mu
+        return data, mu
+    
+    def read_and_prepare_geometry_models(self, dir=None):
+        if dir is None:
+            dir = os.path.join(os.getcwd(), 'assignment2_3D_PCA')
+        geometry_obj_files = [file for file in os.listdir(dir) if file.endswith('.obj')]
+        geometry_obj_files = [os.path.join(dir, file) for file in geometry_obj_files]
+
+        num_models = len(geometry_obj_files)
+        sample_model = OBJFastV(geometry_obj_files[0])
+        num_vertices = len(sample_model.vertices)
+        
+        data = np.zeros((num_models, num_vertices * 3), dtype=np.float32) # 3 for x, y, z
+        for i in range(0, num_models):
+            vertices = OBJFastV(geometry_obj_files[i]).vertices
+            x_coords = [row[0] for row in vertices]
+            y_coords = [row[1] for row in vertices]
+            z_coords = [row[2] for row in vertices]
+            data[i, :] = np.hstack((x_coords, y_coords, z_coords))
+        mu = np.mean(data, 0)
+        data -= mu
+        return data, mu
+    
     def PCA_Tex(self):
 
         ###########################################
@@ -197,27 +241,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         ## Guideline: Read model1.png and model2.png
         ## Do the PCA with the 2 textures, similar to what we did in session 5
-
+        texture_data, texture_mean = self.read_and_prepare_texture_models()
         try:
 
             ## >>> ADD PCA CODE BELOW <<<
-
-
-            # ...
-
-
-
-
-
+            eigenvectors, _, _ = linalg.svd(texture_data.transpose(), full_matrices=False)
+            texture_weights = np.dot(texture_data, eigenvectors)
 
             ## Instead of saving in a yml file, we will save a structure
             ## The variable self.Root['Tex'] is related to the texture
             self.Root['Tex'] = {}
 
             ## Save results
-            # self.Root['Tex']['VrTex'] = ....  # eigenvector variable (transpose/flatten)
-            # self.Root['Tex']['XmTex'] = ....  # average texture variable
-            # self.Root['Tex']['WTex'] =  ....  # min and max weights : format : [min, max]
+            self.Root['Tex']['VrTex'] = eigenvectors.transpose().flatten()  # eigenvector variable (transpose/flatten)
+            self.Root['Tex']['XmTex'] = texture_mean # average texture variable
+            texture_weights *= TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR
+            self.Root['Tex']['WTex'] =  [texture_weights.min(), texture_weights.max()] # min and max weights : format : [min, max]
 
         except Exception as e:
             print('PCA_Tex Error:', e)
@@ -232,27 +271,24 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         ## Guideline: Read model1.obj and model2.obj with the "OBJFastV(...)" function to extract quickly the vertices
         ## Do the PCA with the vertices (similar to the function PCA_Tex(), try to do the same but with the vertices)
         ## Or adapt the code a bit
-
+        geometry_data, geometry_mean = self.read_and_prepare_geometry_models()
 
         try:
 
             ## >>> ADD CODE BELOW <<<
-
-            # ....
-
-
-
+            eigenvectors, _, _ = linalg.svd(geometry_data.transpose(), full_matrices=False)
+            geometry_weights = np.dot(geometry_data, eigenvectors)
 
             # Save results
-
             ## Instead of saving in a yml file, we will save a structure
             ## The variable self.Root['models'] is related to the geometry
             self.Root['models'] = {}
 
             ## Save results
-            # self.Root['models']['VrGeo'] = ....  # eigenvector variable (transpose)
-            # self.Root['models']['XmGeo'] = ....  # average texture variable
-            # self.Root['models']['WGeo'] =  ....  # min and max weights : format : [min, max]
+            self.Root['models']['VrGeo'] = eigenvectors.transpose()  # eigenvector variable (transpose)
+            self.Root['models']['XmGeo'] = geometry_mean  # average texture variable
+            geometry_weights *= GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR
+            self.Root['models']['WGeo'] =  [geometry_weights.min(), geometry_weights.max()]  # min and max weights : format : [min, max]
 
         except Exception as e:
             print('PCA_Geo Error:', e)
@@ -277,9 +313,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             try:
 
                 ## >>> ADD CODE BELOW <<<
-
-                # self.N_TarTex = ...
-
+                self.N_TarTex = self.Root['Tex']['XmTex'] + np.dot(self.Tval, self.Root['Tex']['VrTex'][0])
             except Exception as e:
                 print('New target texture Error', e)
 
@@ -290,9 +324,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
                 ## >>> ADD CODE BELOW <<<
 
-                # self.TarTexture = ...
-
-                self.TarTexture = self.TarTexture.astype(np.uint8)
+                self.TarTexture = np.reshape(self.N_TarTex, (256, 256, 4))
+                self.TarTexture[self.TarTexture < 0] = 0
+                self.TarTexture[self.TarTexture > 1] = 1
+                self.TarTexture = (self.TarTexture * 255).astype(np.uint8)
             except Exception as e:
                 print('TarTexture Error:', e)
 
@@ -303,6 +338,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 print('TarTexture Save error:', e)
 
         self.ui.Tslider.setValue(value)
+        # minimum is 0%, 0 is 50%, maximum is 100%
+        percentage = np.abs(round((value - self.ui.Tslider.minimum()) / (self.ui.Tslider.maximum() - self.ui.Tslider.minimum()) * 100))
+        texture_text_label = f'{value} = {percentage}%'
+        self.ui.textinputtarget.setText(texture_text_label)
 
     def G_SliderValueChange(self, value):
         self.Gval = value
@@ -319,18 +358,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ## W is: Gval  (weight is linked to the slider value "Gval")
             ## E is: self.Root['models']['VrGeo']
             ## The product W * E must be done using np.dot(value1, value2)
-
-
             try:
 
                 ## >>> ADD CODE BELOW <<<
-
-                # self.N_TarModel = ...
-
+                # self.N_TarModel = np.dot(self.Gval, self.Root['models']['VrGeo'][0]) + np.dot(self.Gval, self.Root['models']['VrGeo'][1])
+                # self.N_TarModel += self.Root['models']['XmGeo']
+                self.N_TarModel = self.Root['models']['XmGeo'] + np.dot(self.Gval, self.Root['models']['VrGeo'][0])
             except Exception as e:
                 print('New target model', e)
-
-
 
             ## Reshape the variable self.N_TarModel to have the real geometry format : x y z
             ## For info, the 1D array is like this: x x x x ... y y y y ... z z z z (5904 values 3 times)
@@ -341,30 +376,35 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             ## ....
 
             arr_3d = np.zeros((5904, 3))
-            count = 0
-
             ## Use for loops to reconstruct completely and save the new vertices in self.TarModel.vertices
             ## Do not forget to concatenate x, y and z together (as a float)
 
             ## >>> ADD CODE BELOW <<<
-
-
-
+            for i in range(5904):
+                arr_3d[i, 0] = self.N_TarModel[i] 
+                arr_3d[i, 1] = self.N_TarModel[i + 5904]
+                arr_3d[i, 2] = self.N_TarModel[i + 2*5904]
+                
+            row = temp = []
+            for i in range(5904):
+                row = float(arr_3d[i, 0]), float(arr_3d[i, 1]), float(arr_3d[i, 2])
+                temp.append(row)
             ## self.TarModel.vertices is the new 3D model
             try:
-                # self.TarModel.vertices = ...
-
+                self.TarModel.vertices = temp
             except Exception as e:
                 print(e)
-
 
         try:
             self.ui.Gslider.blockSignals(True)
             self.ui.Gslider.setValue(value)
+            # minimum is 0%, 0 is 50%, maximum is 100%
+            percentage = np.abs(round((value - self.ui.Gslider.minimum()) / (self.ui.Gslider.maximum() - self.ui.Gslider.minimum()) * 100))
+            model_text_label = f'{value} = {percentage}%'
+            self.ui.textmodels.setText(model_text_label)
             self.ui.Gslider.blockSignals(False)
         except Exception as e:
             print(e)
-
 
     def SaveOBJ(self):
         ###########################################
@@ -380,10 +420,30 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         ## You can reuse the original file to add back vt, vn, f...
 
         ## >>> ADD CODE BELOW <<<
+        try:
+            with open(self.GlobalNameWithoutExtension + ".obj", 'r') as file:
+                original_lines = file.readlines()
+            file.close()
 
-        # ....
+            temp_vertices = self.TarModel.vertices.copy()
+            if len(temp_vertices) != 5904:
+                print('Error: Wrong number of vertices')
+                return
+            
+            for idx, line in enumerate(original_lines):
+                if line.startswith('v '): # space after v is important to avoid matching vt
+                    row = temp_vertices.pop(0)
+                    original_lines[idx] = f'v {row[0]} {row[1]} {row[2]}\n'
 
-        pass
+            newfile_name = self.GlobalNameWithoutExtension + "_new_model.obj"
+            with open(newfile_name, 'w') as file:
+                file.writelines(original_lines)
+            print(f'Saved new model to {newfile_name}')
+            file.close()
+                
+        except Exception as e:
+            print(f'Error writing new model: {e}')
+        return
 
     def checkSign(self, W1, W2):
         ## Check the weights, to know which one is negative/positive
