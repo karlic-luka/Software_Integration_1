@@ -59,141 +59,20 @@ class PCAParametersWindow(QWidget):
         self.connect_geom_sliders()
 
         # connect buttons
+        self.params_ui.pbReset_geometry.clicked.connect(self.reset_geometry_sliders)
+        self.params_ui.pbReset_texture.clicked.connect(self.reset_texture_sliders)
         self.change_design()
         self.show()
         return
     
     def change_design(self):
-        ### Colors/Design examples
-        # Main Window
-        # self.setStyleSheet('background-color: #333; color: white;')
-        # # Common style for groupBox_2 and groupBox_3
-        # group_box_style = (
-        #     "QGroupBox {"
-        #     "   border-radius: 9px;"
-        #     "   border: 2px solid #888888;"
-        #     "   margin-top: 0.5em;"
-        #     "}"
-        #     "QGroupBox:title {"
-        #     "   padding: 0 6px 0 6px;"
-        #     "   background-color: #333;"
-        #     "   subcontrol-origin: margin;"
-        #     "   subcontrol-position: top center;"
-        #     "}"
-        #     "font-weight: bold;"
-        #     "font-size: 18px;"
-        # )
-
-        # # Apply the common style to both groupBox_2 and groupBox_3
-        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
-        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
-
-        # Overall background color and text color for the main widget
-        # self.setStyleSheet('background-color: #1E1E1E; color: #FFFFFF;')
-
-        # # Common style for groupBox_2 and groupBox_3
-        # group_box_style = (
-        #     "QGroupBox {"
-        #     "   border: 2px solid #3E3E3E;"
-        #     "   border-radius: 10px;"
-        #     "   margin-top: 0.5em;"
-        #     "}"
-        #     "QGroupBox:title {"
-        #     "   subcontrol-origin: margin;"
-        #     "   subcontrol-position: top center;"
-        #     "   padding: 0 10px 0 10px;"
-        #     "   background-color: #333333;"
-        #     "   color: #FFFFFF;"
-        #     "   font-weight: bold;"
-        #     "   font-size: 18px;"
-        #     "}"
-        # )
-
-        # # Apply the updated style to both groupBox_2 and groupBox_3
-        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
-        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
-
-        # Overall background color and text color for the main widget
-        # self.setStyleSheet('background-color: #F0F0F0; color: #333333;')
-
-        # # Common style for groupBox_2 and groupBox_3
-        # group_box_style = (
-        #     "QGroupBox {"
-        #     "   border: 2px solid #CCCCCC;"
-        #     "   border-radius: 5px;"
-        #     "   margin-top: 0.5em;"
-        #     "}"
-        #     "QGroupBox:title {"
-        #     "   subcontrol-origin: margin;"
-        #     "   subcontrol-position: top center;"
-        #     "   padding: 5px 10px;"
-        #     "   background-color: #E0E0E0;"
-        #     "   color: #333333;"
-        #     "   font-weight: bold;"
-        #     "   font-size: 16px;"
-        #     "}"
-        # )
-
-        # # Apply the updated style to both groupBox_2 and groupBox_3
-        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
-        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
-
-        # Overall background color and text color for the main widget
-        # self.setStyleSheet('background-color: #EDEDED; color: #333333;')
-
-        # # Common style for groupBox_2 and groupBox_3
-        # group_box_style = (
-        #     "QGroupBox {"
-        #     "   border: 2px solid #A0A0A0;"
-        #     "   border-radius: 8px;"
-        #     "   margin-top: 0.5em;"
-        #     "   background-color: #FFFFFF;"
-        #     "}"
-        #     "QGroupBox:title {"
-        #     "   subcontrol-origin: margin;"
-        #     "   subcontrol-position: top center;"
-        #     "   padding: 8px 15px;"
-        #     "   background-color: #4CAF50;"  # Green title background
-        #     "   color: #FFFFFF;"
-        #     "   font-weight: bold;"
-        #     "   font-size: 16px;"
-        #     "}"
-        # )
-
-        # # Apply the updated style to both groupBox_2 and groupBox_3
-        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
-        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
-
-        # Apply the updated style to both groupBox_2 and groupBox_3
-        font = QFont("Roboto", 11)  # You can adjust the size as needed
-
-        # Set the font for the main widget
+        font = QFont("Roboto", 11)  
         self.setFont(font)
-        # Overall background color and text color for the main widget
         self.setStyleSheet('background-color: #EDEDED; color: #333333;')
 
-        # Common style for groupBox_2 and groupBox_3
-        group_box_style = (
-            "QGroupBox {"
-            "   border: 2px solid #4682B4;"  # Steel Blue border
-            "   border-radius: 8px;"
-            "   margin-top: 0.5em;"
-            "   background-color: #FFFFFF;"
-            "}"
-            "QGroupBox:title {"
-            "   subcontrol-origin: margin;"
-            "   subcontrol-position: top center;"
-            "   padding: 8px 15px;"
-            "   background-color: #4682B4;"  # Steel Blue title background
-            "   color: #FFFFFF;"
-            "   font-weight: bold;"  # Make the title text bold
-            "   font-size: 16px;"
-            "}"
-        )
-
         group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
-                         "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
-                         "#groupBox_3 { font-weight: bold; font-size: 18px; }")
+                   "QGroupBox:title { padding: 0 3px 0 3px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
+                   "#groupBox_3 { font-weight: bold; font-size: 12px; }")
 
         # Customize the style of QPushButton (buttons) with a lighter shade of blue
         button_style = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
@@ -249,6 +128,24 @@ class PCAParametersWindow(QWidget):
             slider.setEnabled(False)
         return
     
+    def reset_geometry_sliders(self):
+        for slider in self.geom_sliders:
+            # slider.blockSignals(True)
+            slider.setValue(0)
+            self.change_geometry_label(0, slider)
+            # slider.blockSignals(False)
+        self.parent.G_SliderValueChange(0)
+        return
+    
+    def reset_texture_sliders(self):
+        for slider in self.tex_sliders:
+            # slider.blockSignals(True)
+            slider.setValue(0)
+            self.change_texture_label(0, slider)
+            # slider.blockSignals(False)
+        self.parent.T_SliderValueChange(0)
+        return
+    
     def T_SliderValueChange(self, value):
         # TODO prebaciti mozda ovdje jer mi se cini kao da se zablokira GUI kada se ovo pozove
         # print(f'Inside PCAParametersWindow.T_SliderValueChange')
@@ -269,7 +166,7 @@ class PCAParametersWindow(QWidget):
             slider_id = int(slider.objectName().split('_')[-1])
             geometry_comp_label = getattr(self.params_ui, f'geom_comp_label_{slider_id}')
             percentage = np.abs((value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100)
-            geometry_comp_label_text = f'{value} = {percentage : .1f}%'
+            geometry_comp_label_text = f'{value} = {percentage :.1f}%'
             geometry_comp_label.setText(geometry_comp_label_text)
         except Exception as e:
             print(f'Error updating geometry slider label: {e}')
@@ -281,7 +178,7 @@ class PCAParametersWindow(QWidget):
             slider_id = int(slider.objectName().split('_')[-1])
             texture_comp_label = getattr(self.params_ui, f'tex_comp_label_{slider_id}')
             percentage = np.abs((value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100)
-            texture_comp_label_text = f'{value} = {percentage : .1f}%'
+            texture_comp_label_text = f'{value} = {percentage :.1f}%'
             texture_comp_label.setText(texture_comp_label_text)
         except Exception as e:
             print(f'Error updating texture slider label: {e}')
@@ -374,37 +271,21 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         ### Colors/Design examples
         # Main Window
         self.setup_styles()
-        self.setStyleSheet('background-color: #333; color: white;')
-
         return
     
     def setup_styles(self):
-        # Set the background color of the main window
-        # self.ui.centralwidget.setStyleSheet('background-color: #333; color: white;')
         self.ui.centralwidget.setStyleSheet('background-color: #EDEDED; color: #333333;')
-
-        # group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
-        #                  "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
-        #                  "#groupBox_3 { font-weight: bold; font-size: 18px; }")
-        
-        # # Customize the style of QPushButton (buttons) with a lighter shade of blue
-        # buttonStyle = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
-        #                "QPushButton:hover { background-color: #5499C7; }")
         group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
                          "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
                          "#groupBox_3 { font-weight: bold; font-size: 18px; }")
 
-        # Customize the style of QPushButton (buttons) with a lighter shade of blue
         buttonStyle = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
                        "QPushButton:hover { background-color: #5499C7; }")
-        # Apply the style to the buttons
         self.ui.LoadFile.setStyleSheet(buttonStyle)
         self.ui.Process.setStyleSheet(buttonStyle)
         self.ui.exportResult.setStyleSheet(buttonStyle)
         self.ui.pb_stop_processing.setStyleSheet(buttonStyle)
         
-
-        # Apply the style to a specific QGroupBox (replace groupBox_3 with the actual name of your group box)
         self.ui.groupGUI.setStyleSheet(group_box_style)
         return
     
@@ -563,9 +444,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         ## Guideline: Read model1.png and model2.png
         ## Do the PCA with the 2 textures, similar to what we did in session 5
-        eigenvectors_transposed_flattened = result['eigenvectors_transposed_flattened']
-        texture_mean = result['mean']
-        texture_weights = result['weights']
+        eigenvectors_transposed_flattened = result['eigenvectors_transposed_flattened'].copy()
+        texture_mean = result['mean'].copy()
+        texture_weights = result['weights'].copy()
         try:
             ## Instead of saving in a yml file, we will save a structure
             ## The variable self.Root['Tex'] is related to the texture
@@ -573,18 +454,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
             ## Save results
             self.Root['Tex']['VrTex'] = eigenvectors_transposed_flattened  # eigenvector variable (transpose/flatten)
-            print(f'Texture transposed/flattened eigenvectors shape: {self.Root["Tex"]["VrTex"].shape}')
+            # print(f'Texture transposed/flattened eigenvectors shape: {self.Root["Tex"]["VrTex"].shape}')
             self.Root['Tex']['XmTex'] = texture_mean # average texture variable
-            print(f'Texture mean shape: {self.Root["Tex"]["XmTex"].shape}')
+            # print(f'Texture mean shape: {self.Root["Tex"]["XmTex"].shape}')
             texture_weights *= TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR
-            print(f'Some texture weights: {texture_weights[0, :5]}')
+            # print(f'Some texture weights: {texture_weights[0, :5]}')
             # save min and max weights for each row
             temp_minimums = np.min(texture_weights, axis=1)
             temp_maximums = np.max(texture_weights, axis=1)
             self.Root['Tex']['WTex'] = [temp_minimums, temp_maximums]
-            print(f'Texture min shape: {self.Root["Tex"]["WTex"][0].shape}')
-            print(f'Texture max shape: {self.Root["Tex"]["WTex"][1].shape}')
-            print(f'Texture min and max weights: {self.Root["Tex"]["WTex"]}')
+            # print(f'Texture min shape: {self.Root["Tex"]["WTex"][0].shape}')
+            # print(f'Texture max shape: {self.Root["Tex"]["WTex"][1].shape}')
+            # print(f'Texture min and max weights: {self.Root["Tex"]["WTex"]}')
             # self.Root['Tex']['WTex'] =  [texture_weights.min(), texture_weights.max()] # min and max weights : format : [min, max]
 
         except Exception as e:
@@ -607,9 +488,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         ## Guideline: Read model1.obj and model2.obj with the "OBJFastV(...)" function to extract quickly the vertices
         ## Do the PCA with the vertices (similar to the function PCA_Tex(), try to do the same but with the vertices)
         ## Or adapt the code a bit
-        eigenvectors_transposed = result['eigenvectors_transposed']
-        geometry_mean = result['mean']
-        geometry_weights = result['weights']
+        eigenvectors_transposed = result['eigenvectors_transposed'].copy()
+        geometry_mean = result['mean'].copy()
+        geometry_weights = result['weights'].copy()
         try:
             # Save results
             ## Instead of saving in a yml file, we will save a structure
@@ -618,11 +499,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
             ## Save results
             self.Root['models']['VrGeo'] = eigenvectors_transposed  # eigenvector variable (transpose)
-            print(f'Geometry transposed eigenvectors shape: {self.Root["models"]["VrGeo"].shape}')
+            # print(f'Geometry transposed eigenvectors shape: {self.Root["models"]["VrGeo"].shape}')
             self.Root['models']['XmGeo'] = geometry_mean  # average texture variable
-            print(f'Geometry mean shape: {self.Root["models"]["XmGeo"].shape}')
+            # print(f'Geometry mean shape: {self.Root["models"]["XmGeo"].shape}')
             geometry_weights *= GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR
-            print(f'Some geometry weights: {geometry_weights[0, :5]}')
+            # print(f'Some geometry weights: {geometry_weights[0, :5]}')
             temp_minimums = np.min(geometry_weights, axis=1)
             temp_maximums = np.max(geometry_weights, axis=1)
             self.Root['models']['WGeo'] = [temp_minimums, temp_maximums]
@@ -631,6 +512,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         except Exception as e:
             print('PCA_Geo Error:', e)
             return
+        
         self.b_Process2Done = True
         print(f'PCA_Geo DONE.')
         self.finished_threads_counter += 1
@@ -648,7 +530,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         for i in range(len(self.params_window.tex_sliders)):
             self.texture_slider_weights.append(self.params_window.tex_sliders[i].value())
         self.texture_slider_weights = np.array(self.texture_slider_weights)
-        # print(f'Tval: {self.texture_slider_weights}')
+        print(f'Tval: {self.texture_slider_weights}')
 
 
         ###########################################
@@ -667,11 +549,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             try:
 
                 ## >>> ADD CODE BELOW <<<
-                # print(f'Part of the texture mean: {self.Root["Tex"]["XmTex"][:5]}')
+                # print(f'Part of the texture mean: {self.Root["Tex"]["XmTex"][:5][:3]}')
                 self.N_TarTex = self.Root['Tex']['XmTex'].copy() # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
                 for i in range(len(self.params_window.tex_sliders)):
                     self.N_TarTex += np.dot(self.texture_slider_weights[i], self.Root['Tex']['VrTex'][i].copy()) # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
-
+                # print(f'Part of the new texture: {self.N_TarTex[:5][:3]}')
             except Exception as e:
                 print('New target texture Error', e)
 
@@ -703,7 +585,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         for i in range(len(self.params_window.geom_sliders)):
             self.geom_slider_weights.append(self.params_window.geom_sliders[i].value())
         self.geom_slider_weights = np.array(self.geom_slider_weights)
-        # print(f'geom_slider_weights: {self.geom_slider_weights}')
+        print(f'geom_slider_weights: {self.geom_slider_weights}')
 
 
         ###########################################
