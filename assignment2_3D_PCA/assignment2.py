@@ -145,6 +145,7 @@ class PCAParametersWindow(QWidget):
             slider.blockSignals(False)
         self.parent.G_SliderValueChange(0)
         self.parent.updateFrame()  # NOTE manually update the 3D model
+        # TODO sometimes I have a bug where the face is not updated (slider is at 0 but the face is not updated)
         self.logger.info(f"Reset geometry sliders")
         return
 
@@ -156,6 +157,7 @@ class PCAParametersWindow(QWidget):
             slider.blockSignals(False)
         self.parent.T_SliderValueChange(0)
         self.parent.updateFrame()  # NOTE manually update the 3D model
+        # TODO sometimes I have a bug where the face is not updated (slider is at 0 but the face is not updated)
         self.logger.info(f"Reset texture sliders")
         return
 
