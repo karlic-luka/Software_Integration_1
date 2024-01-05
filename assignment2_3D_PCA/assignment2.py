@@ -34,20 +34,23 @@ from pca_params_new_window import Ui_Form as PCA_Params_Ui_Form
 from OBJ import OBJ
 
 from pca_threads import TextureThreadClass, GeometryThreadClass
+import logging, time
 
-TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 2
+TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 5
 GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR = 1
 # TODO add title, my name etc.
-# TODO add RESET button to set all sliders to 0
 
 class PCAParametersWindow(QWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, logger):
         super(PCAParametersWindow, self).__init__()
 
         self.parent = parent
+        self.logger = logger
         self.parent : MyMainWindow # type hinting
         QWidget.__init__(self)
         PCA_Params_Ui_Form.__init__(self)
+
+        self.setWindowTitle('Sliders for changing texture and geometry weights')
 
         self.params_ui = PCA_Params_Ui_Form()
         self.params_ui.setupUi(self)
@@ -86,7 +89,6 @@ class PCAParametersWindow(QWidget):
 
 
     def initialize_sliders(self):
-        print(f'Inside PCAParametersWindow.initialize_sliders')
         for slider in self.tex_sliders:
             slider.blockSignals(True)
             slider.setValue(0)
@@ -98,7 +100,7 @@ class PCAParametersWindow(QWidget):
             slider.setValue(0)
             slider.blockSignals(False)
             slider.setEnabled(False)
-        print(f'Initialized sliders')
+        self.logger.info('Initialized sliders')
         return
     
             
@@ -111,52 +113,52 @@ class PCAParametersWindow(QWidget):
         for i in range(1, 23):
             slider = getattr(self.params_ui, f'Gslider_{i}')
             geom_sliders.append(slider)
-        print(f'Got all sliders')
-        print(f'Number of texture sliders: {len(tex_sliders)}')
-        print(f'Number of geometry sliders: {len(geom_sliders)}')
+        self.logger.info(f'Number of texture sliders: {len(tex_sliders)}')
+        self.logger.info(f'Number of geometry sliders: {len(geom_sliders)}')
         return tex_sliders, geom_sliders
     
     def connect_tex_sliders(self):
         for slider in self.tex_sliders:
             slider.valueChanged.connect(self.T_SliderValueChange)
             slider.setEnabled(False)
+        self.logger.info(f'Connected {len(self.tex_sliders)} texture sliders')
         return
     
     def connect_geom_sliders(self):
         for slider in self.geom_sliders:
             slider.valueChanged.connect(self.G_SliderValueChange)
             slider.setEnabled(False)
+        self.logger.info(f'Connected {len(self.geom_sliders)} geometry sliders')
         return
     
     def reset_geometry_sliders(self):
         for slider in self.geom_sliders:
-            # slider.blockSignals(True)
+            slider.blockSignals(True)
             slider.setValue(0)
             self.change_geometry_label(0, slider)
-            # slider.blockSignals(False)
+            slider.blockSignals(False)
         self.parent.G_SliderValueChange(0)
+        self.parent.updateFrame() # NOTE manually update the 3D model
+        self.logger.info(f'Reset geometry sliders')
         return
     
     def reset_texture_sliders(self):
         for slider in self.tex_sliders:
-            # slider.blockSignals(True)
+            slider.blockSignals(True)
             slider.setValue(0)
             self.change_texture_label(0, slider)
-            # slider.blockSignals(False)
+            slider.blockSignals(False)
         self.parent.T_SliderValueChange(0)
+        self.parent.updateFrame() # NOTE manually update the 3D model
+        self.logger.info(f'Reset texture sliders')
         return
     
     def T_SliderValueChange(self, value):
-        # TODO prebaciti mozda ovdje jer mi se cini kao da se zablokira GUI kada se ovo pozove
-        # print(f'Inside PCAParametersWindow.T_SliderValueChange')
-        # change label
         self.change_texture_label(value, self.sender())
         self.parent.T_SliderValueChange(value)
         return
     
     def G_SliderValueChange(self, value):
-        # TODO prebaciti mozda ovdje jer mi se cini kao da se zablokira GUI kada se ovo pozove
-        # print(f'Inside PCAParametersWindow.G_SliderValueChange')
         self.change_geometry_label(value, self.sender())
         self.parent.G_SliderValueChange(value)
         return
@@ -169,8 +171,8 @@ class PCAParametersWindow(QWidget):
             geometry_comp_label_text = f'{value} = {percentage :.1f}%'
             geometry_comp_label.setText(geometry_comp_label_text)
         except Exception as e:
-            print(f'Error updating geometry slider label: {e}')
-            print(f'Geometry weight value was probably changed by the program, not by the user.')
+            self.logger.info(f'Error updating geometry slider label: {e}')
+            self.logger.info(f'Geometry weight value was probably changed by the program, not by the user.')
         return
     
     def change_texture_label(self, value, slider):
@@ -181,16 +183,12 @@ class PCAParametersWindow(QWidget):
             texture_comp_label_text = f'{value} = {percentage :.1f}%'
             texture_comp_label.setText(texture_comp_label_text)
         except Exception as e:
-            print(f'Error updating texture slider label: {e}')
-            print(f'Texture weight value was probably changed by the program, not by the user.')
+            self.logger.info(f'Error updating texture slider label: {e}')
+            self.logger.info(f'Texture weight value was probably changed by the program, not by the user.')
         return
 
 
-    
 
-####################################################################################################
-# The Main Window (GUI) --- TASKS TO DO HERE
-####################################################################################################
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)  # The 2 lines here are always presented like this
@@ -199,7 +197,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # All the elements from our GUI are added in "ui"
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.params_window = PCAParametersWindow(parent=self)
+        self.create_logger()
+        self.params_window = PCAParametersWindow(parent=self, logger=self.logger)
+        # create logger
+
+        self.setWindowTitle('3D PCA Morphing')
+        footer_text = '3D PCA Morphing - Assignment 2 - Software Integration - 2023/24 - Université Paris-Est Créteil - by: <b>Luka Karlić</b>'
+        self.footer_label = QLabel(footer_text)
+        self.footer_label.setAlignment(Qt.AlignCenter)
+        self.ui.statusbar.addPermanentWidget(self.footer_label)
 
         # Default param
         self.InputModelLoaded = False
@@ -261,16 +267,34 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
         # connect threads
         self.finished_threads_counter = 0
-        self.pca_texture_thread = TextureThreadClass()
+        self.pca_texture_thread = TextureThreadClass(logger=self.logger)
         self.pca_texture_thread.finished.connect(self.PCA_Tex)
         self.pca_texture_thread.updated.connect(self.update_texture_progress_bar)
-        self.pca_geometry_thread = GeometryThreadClass()
+        self.pca_geometry_thread = GeometryThreadClass(logger=self.logger)
         self.pca_geometry_thread.finished.connect(self.PCA_Geo)
         self.pca_geometry_thread.updated.connect(self.update_geometry_progress_bar)
 
         ### Colors/Design examples
         # Main Window
         self.setup_styles()
+        self.logger.info('Application started')
+        return
+    
+    def create_logger(self):
+        """
+        Create a logger object and configure it with the necessary settings.
+        The logger will save log messages to a file in the 'logs' directory,
+        with the name based on the current date and time.
+        """
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
+        # save the log file to the logs directory with the name after the current date and time
+        logs_path = os.path.join(os.getcwd(), "assignment2_3D_PCA", "logs")
+        if not os.path.exists(logs_path):
+            os.makedirs(logs_path)
+        self.handler = logging.FileHandler(os.path.join(logs_path, f'{time.strftime("%Y%m%d-%H%M%S")}_3D_PCA_morphing.log'))
+        self.handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(message)s'))
+        self.logger.addHandler(self.handler)
         return
     
     def setup_styles(self):
@@ -290,7 +314,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return
     
     def closeEvent(self, event):
-        print(f'Inside closeEvent')
+        self.logger.info('Inside closeEvent')
         if hasattr(self, 'pca_texture_thread'):
             if self.pca_texture_thread.isRunning():
                 self.pca_texture_thread.requestInterruption()
@@ -302,10 +326,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.pca_geometry_thread.requestInterruption()
                 self.pca_geometry_thread.stop()
                 self.pca_geometry_thread.quit()
+        self.logger.info('Closing application')
         return
     
     def stop_threads(self):
-        print(f'Manually stopping threads')
+        self.logger.info('Stopping threads manually')
         if hasattr(self, 'pca_texture_thread'):
             if self.pca_texture_thread.isRunning():
                 self.pca_texture_thread.requestInterruption()
@@ -357,51 +382,28 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.glWidget.update()
 
         except IOError as e:
-            print("I/O error({0}): {1}".format(e.errno, e.strerror))
-            print(self.myFile)
+            self.logger.info(f'Error loading file: {e}')
+            self.logger.info(f'File path: {self.myFile}')
         except ValueError:
-            print("Value Error.")
+            self.logger.info('Value Error.')
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            self.logger.info(f'Unexpected error: {sys.exc_info()[0]}')
             raise
 
     
     def ProcessClicked(self):
-
         self.pca_texture_thread.start()
         self.pca_geometry_thread.start()
         return
 
     def on_PCA_is_finished(self):
         self.PCA_done = True
-        # Unlock and prepare sliders
-        # self.ui.Tslider.blockSignals(True)
-        # self.ui.Tslider.setValue(0)
-        # self.T_SliderValueChange(0)
-        # self.ui.Tslider.blockSignals(False)
-        # self.ui.Tslider.setEnabled(True)
-        # # S = self.checkSign(round(self.Root['Tex']['WTex'][0]), round(self.Root['Tex']['WTex'][1]))
-        # # Tmin = round (S * self.Root['Tex']['WTex'][0])
-        # # Tmax = round (S * self.Root['Tex']['WTex'][1])
-        # Tmin, Tmax = -255, 255
-        # self.ui.Tslider.setRange(Tmin, Tmax)
 
-        # self.ui.Gslider.blockSignals(True)
-        # self.ui.Gslider.setValue(0)
-        # self.G_SliderValueChange(0)
-        # self.ui.Gslider.blockSignals(False)
-        # self.ui.Gslider.setEnabled(True)
-        # # Gmin = round(self.Root['models']['WGeo'][0])
-        # # Gmax = round(self.Root['models']['WGeo'][1])
-        # Gmin, Gmax = -255, 255
-        # self.ui.Gslider.setRange(Gmin, Gmax)
-
-        print(f'Inside on_PCA_is_finished')
-        print(f'Updating Texture sliders')
+        self.logger.info(f'Inside on_PCA_is_finished')
+        self.logger.info(f'Updating Texture sliders')
         # update texture sliders
         tex_initialized = False
         for slider_id, slider in enumerate(self.params_window.tex_sliders):
-            # print(f'Updating slider with id={slider_id}')
             slider.blockSignals(True)
             slider.setValue(0)
             if not tex_initialized:
@@ -416,11 +418,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             Tmax = round(S * max_temp)
             slider.setRange(Tmin, Tmax)
 
-        print(f'Updating Geometry sliders')
+        self.logger.info(f'Updating Geometry sliders')
         geometry_initialized = False
         # update geometry sliders
         for slider_id, slider in enumerate(self.params_window.geom_sliders):
-            # print(f'Updating slider with id={slider_id}')
             slider.blockSignals(True)
             slider.setValue(0)
             if not geometry_initialized:
@@ -434,147 +435,93 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return
     
     def PCA_Tex(self, result: dict):
-
-        ###########################################
-        # TASK 1 FOR THE ASSIGNMENT
-        ###########################################
-
-        ## Note: You will be evaluated on each task
-        ## If it doesn't work, you will be evaluated on your efforts and the quality of the code by trying to do it
-
-        ## Guideline: Read model1.png and model2.png
-        ## Do the PCA with the 2 textures, similar to what we did in session 5
         eigenvectors_transposed_flattened = result['eigenvectors_transposed_flattened'].copy()
         texture_mean = result['mean'].copy()
         texture_weights = result['weights'].copy()
         try:
-            ## Instead of saving in a yml file, we will save a structure
-            ## The variable self.Root['Tex'] is related to the texture
             self.Root['Tex'] = {}
 
             ## Save results
             self.Root['Tex']['VrTex'] = eigenvectors_transposed_flattened  # eigenvector variable (transpose/flatten)
-            # print(f'Texture transposed/flattened eigenvectors shape: {self.Root["Tex"]["VrTex"].shape}')
             self.Root['Tex']['XmTex'] = texture_mean # average texture variable
-            # print(f'Texture mean shape: {self.Root["Tex"]["XmTex"].shape}')
             texture_weights *= TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR
-            # print(f'Some texture weights: {texture_weights[0, :5]}')
             # save min and max weights for each row
             temp_minimums = np.min(texture_weights, axis=1)
             temp_maximums = np.max(texture_weights, axis=1)
+            self.logger.info(f'Texture weights min: {temp_minimums}')
+            self.logger.info(f'Texture weights max: {temp_maximums}')
             self.Root['Tex']['WTex'] = [temp_minimums, temp_maximums]
-            # print(f'Texture min shape: {self.Root["Tex"]["WTex"][0].shape}')
-            # print(f'Texture max shape: {self.Root["Tex"]["WTex"][1].shape}')
-            # print(f'Texture min and max weights: {self.Root["Tex"]["WTex"]}')
-            # self.Root['Tex']['WTex'] =  [texture_weights.min(), texture_weights.max()] # min and max weights : format : [min, max]
 
         except Exception as e:
-            print('PCA_Tex Error:', e)
+            self.logger.info(f'PCA_Tex Error: {e}')
             return
         self.b_ProcessDone = True
         self.finished_threads_counter += 1
         if self.finished_threads_counter == 2:
             self.on_PCA_is_finished()
-        print(f'COUNTER: {self.finished_threads_counter}')
+        self.logger.info(f'COUNTER: {self.finished_threads_counter}')
+        self.logger.info(f'PCA_Tex DONE.')
         return
 
 
     def PCA_Geo(self, result: dict):
-
-        ###########################################
-        # TASK 2 FOR THE ASSIGNMENT
-        ###########################################
-
-        ## Guideline: Read model1.obj and model2.obj with the "OBJFastV(...)" function to extract quickly the vertices
-        ## Do the PCA with the vertices (similar to the function PCA_Tex(), try to do the same but with the vertices)
-        ## Or adapt the code a bit
         eigenvectors_transposed = result['eigenvectors_transposed'].copy()
         geometry_mean = result['mean'].copy()
         geometry_weights = result['weights'].copy()
         try:
-            # Save results
-            ## Instead of saving in a yml file, we will save a structure
-            ## The variable self.Root['models'] is related to the geometry
             self.Root['models'] = {}
-
-            ## Save results
             self.Root['models']['VrGeo'] = eigenvectors_transposed  # eigenvector variable (transpose)
-            # print(f'Geometry transposed eigenvectors shape: {self.Root["models"]["VrGeo"].shape}')
             self.Root['models']['XmGeo'] = geometry_mean  # average texture variable
-            # print(f'Geometry mean shape: {self.Root["models"]["XmGeo"].shape}')
             geometry_weights *= GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR
-            # print(f'Some geometry weights: {geometry_weights[0, :5]}')
             temp_minimums = np.min(geometry_weights, axis=1)
             temp_maximums = np.max(geometry_weights, axis=1)
             self.Root['models']['WGeo'] = [temp_minimums, temp_maximums]
-            # self.Root['models']['WGeo'] =  [geometry_weights.min(), geometry_weights.max()]  # min and max weights : format : [min, max]
 
         except Exception as e:
-            print('PCA_Geo Error:', e)
+            self.logger.info(f'PCA_Geo Error: {e}')
             return
         
         self.b_Process2Done = True
-        print(f'PCA_Geo DONE.')
         self.finished_threads_counter += 1
-        print(f'COUNTER: {self.finished_threads_counter}')
         if self.finished_threads_counter == 2:
             self.on_PCA_is_finished()
+        self.logger.info(f'COUNTER: {self.finished_threads_counter}')
+        self.logger.info(f'PCA_Geo DONE.')
+
         return
 
 
     def T_SliderValueChange(self, value):
         self.Tval = value
-        # print(f'Tval: {self.Tval}')
         # collect all weights from sliders
         self.texture_slider_weights = []
         for i in range(len(self.params_window.tex_sliders)):
             self.texture_slider_weights.append(self.params_window.tex_sliders[i].value())
         self.texture_slider_weights = np.array(self.texture_slider_weights)
-        print(f'Tval: {self.texture_slider_weights}')
+        self.logger.info(f'Texture slider weights: {self.texture_slider_weights}')
 
 
-        ###########################################
-        # TASK 3 FOR THE ASSIGNMENT
-        ###########################################
-
-        ## Texture slider ( PCA : Input Texture <----> Target Texture )
         if self.b_ProcessDone == True and self.b_Process2Done == True:
-            ## You have to create the new texture by uGsing the formula of the PCA
-            ## As a reminder, Texture = Mean + W1 * E1 + W2 * E2 + ....
-            ## Mean is: self.Root['Tex']['XmTex']
-            ## W is: Tval  (weight is linked to the slider value "Tval")
-            ## E is: self.Root['Tex']['VrTex'][0]
-            ## The product Wi * Ei must be done using np.dot(value1, value2)
-
             try:
-
-                ## >>> ADD CODE BELOW <<<
-                # print(f'Part of the texture mean: {self.Root["Tex"]["XmTex"][:5][:3]}')
                 self.N_TarTex = self.Root['Tex']['XmTex'].copy() # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
                 for i in range(len(self.params_window.tex_sliders)):
                     self.N_TarTex += np.dot(self.texture_slider_weights[i], self.Root['Tex']['VrTex'][i].copy()) # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
-                # print(f'Part of the new texture: {self.N_TarTex[:5][:3]}')
             except Exception as e:
-                print('New target texture Error', e)
+                self.logger.info(f'New target texture Error: {e}')
 
-            ## Reshape the variable self.N_TarTex to have the real texture size 256*256*4 (RGBA) instead of 1D array
-            ## Convert astype np.uint8 to be usable
             try:
-
-                ## >>> ADD CODE BELOW <<<
-
                 self.TarTexture = np.reshape(self.N_TarTex, (256, 256, 4))
                 self.TarTexture[self.TarTexture < 0] = 0
                 self.TarTexture[self.TarTexture > 1] = 1
                 self.TarTexture = (self.TarTexture * 255).astype(np.uint8)
             except Exception as e:
-                print('TarTexture Error:', e)
+                self.logger.info(f'TarTexture Error: {e}')
 
             # Save the new texture
             try:
                 imageio.v2.imsave("TarTexture" + ".png", self.TarTexture)
             except Exception as e:
-                print('TarTexture Save error:', e)
+                self.logger.info(f'TarTexture Save error: {e}')
 
         return
 
@@ -585,45 +532,20 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         for i in range(len(self.params_window.geom_sliders)):
             self.geom_slider_weights.append(self.params_window.geom_sliders[i].value())
         self.geom_slider_weights = np.array(self.geom_slider_weights)
-        print(f'geom_slider_weights: {self.geom_slider_weights}')
+        self.logger.info(f'Geometry slider weights: {self.geom_slider_weights}')
 
-
-        ###########################################
-        # TASK 4 FOR THE ASSIGNMENT
-        ###########################################
-
-        ## Geometry slider ( model1 <----> model2 )
         if self.b_ProcessDone == True and self.b_Process2Done == True:
-            ## You have to create the new geometry by using the formula of the PCA
-            ## As a reminder, 3DFace = Mean + W1 * E1 + W2 * E2 + ....
-            ## Mean is: self.Root['models']['XmGeo']
-            ## W is: Gval  (weight is linked to the slider value "Gval")
-            ## E is: self.Root['models']['VrGeo']
-            ## The product W * E must be done using np.dot(value1, value2)
-            try:
 
-                ## >>> ADD CODE BELOW <<<
-                # print(f'Part of the geometry mean: {self.Root["models"]["XmGeo"][:5]}')
+            try:
                 self.N_TarModel = self.Root['models']['XmGeo'].copy() # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
                 for i in range(len(self.params_window.geom_sliders)):
                     self.N_TarModel += np.dot(self.geom_slider_weights[i], self.Root['models']['VrGeo'][i].copy()) # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
 
             except Exception as e:
-                print('New target model', e)
-
-            ## Reshape the variable self.N_TarModel to have the real geometry format : x y z
-            ## For info, the 1D array is like this: x x x x ... y y y y ... z z z z (5904 values 3 times)
-            ## The first 5904 values in self.N_TarModel are X, next 5904 are Y, last 5904 are Z
-            ## Final format should be : 5904 rows and 3 columns :
-            ## x y z
-            ## x y z
-            ## ....
+                self.logger.info(f'New target model: {e}')
 
             arr_3d = np.zeros((5904, 3))
-            ## Use for loops to reconstruct completely and save the new vertices in self.TarModel.vertices
-            ## Do not forget to concatenate x, y and z together (as a float)
 
-            ## >>> ADD CODE BELOW <<<
             for i in range(5904):
                 arr_3d[i, 0] = self.N_TarModel[i] 
                 arr_3d[i, 1] = self.N_TarModel[i + 5904]
@@ -637,22 +559,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             try:
                 self.TarModel.vertices = temp
             except Exception as e:
-                print(e)
+                self.logger.info(f'Error updating TarModel.vertices: {e}')
 
     def SaveOBJ(self):
-        ###########################################
-        # TASK 5 FOR THE ASSIGNMENT
-        ###########################################
-
-        ## Try to see how the OBJ class works (file OBJ.py)
-        ## Instead of reading, you should now write in a file
-        ## You will need to add everything in the .obj, not only vertices!
-
-        ## Open the model1.obj with a text editor for example to see what you have in it
-        ## The new file will be similar but with the new vertices (v)
-        ## You can reuse the original file to add back vt, vn, f...
-
-        ## >>> ADD CODE BELOW <<<
         try:
             with open(self.GlobalNameWithoutExtension + ".obj", 'r') as file:
                 original_lines = file.readlines()
@@ -660,7 +569,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
             temp_vertices = self.TarModel.vertices.copy()
             if len(temp_vertices) != 5904:
-                print('Error: Wrong number of vertices')
+                self.logger.info(f'Error: Wrong number of vertices')
                 return
             
             for idx, line in enumerate(original_lines):
@@ -671,11 +580,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             newfile_name = self.GlobalNameWithoutExtension + "_new_model.obj"
             with open(newfile_name, 'w') as file:
                 file.writelines(original_lines)
-            print(f'Saved new model to {newfile_name}')
+            self.logger.info(f'Saved new model to {newfile_name}')
             file.close()
                 
         except Exception as e:
-            print(f'Error writing new model: {e}')
+            self.logger.info(f'Error writing new model: {e}')
         return
 
     def checkSign(self, W1, W2):
@@ -1067,7 +976,6 @@ class GLWidget(QGLWidget):
         while angle > 360 * 16:
             angle -= 360 * 16
         return angle
-
 
 
 
