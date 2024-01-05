@@ -35,7 +35,7 @@ from OBJ import OBJ
 
 from pca_threads import TextureThreadClass, GeometryThreadClass
 
-TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 5
+TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 2
 GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR = 1
 
 class PCAParametersWindow(QWidget):
@@ -107,12 +107,34 @@ class PCAParametersWindow(QWidget):
     def T_SliderValueChange(self, value):
         # TODO prebaciti mozda ovdje jer mi se cini kao da se zablokira GUI kada se ovo pozove
         # print(f'Inside PCAParametersWindow.T_SliderValueChange')
+        # change label
+        try:
+            slider = self.sender()
+            slider_id = int(slider.objectName().split('_')[-1])
+            texture_comp_label = getattr(self.params_ui, f'tex_comp_label_{slider_id}')
+            percentage = np.abs((value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100)
+            texture_comp_label_text = f'{value} = {percentage : .1f}%'
+            texture_comp_label.setText(texture_comp_label_text)
+        except Exception as e:
+            print(f'Error updating texture slider label: {e}')
+            print(f'Texture weight value was probably changed by the program, not by the user.')
         self.parent.T_SliderValueChange(value)
         return
     
     def G_SliderValueChange(self, value):
         # TODO prebaciti mozda ovdje jer mi se cini kao da se zablokira GUI kada se ovo pozove
         # print(f'Inside PCAParametersWindow.G_SliderValueChange')
+        try:
+            slider = self.sender()
+            slider_id = int(slider.objectName().split('_')[-1])
+            geometry_comp_label = getattr(self.params_ui, f'geom_comp_label_{slider_id}')
+            percentage = np.abs((value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100)
+            geometry_comp_label_text = f'{value} = {percentage : .1f}%'
+            geometry_comp_label.setText(geometry_comp_label_text)
+        except Exception as e:
+            print(f'Error updating geometry slider label: {e}')
+            print(f'Geometry weight value was probably changed by the program, not by the user.')
+        
         self.parent.G_SliderValueChange(value)
         return
 
