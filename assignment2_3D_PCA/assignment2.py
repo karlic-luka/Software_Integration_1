@@ -215,13 +215,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.setupUi(self)
         self.create_logger()
         self.params_window = PCAParametersWindow(parent=self, logger=self.logger)
-        # create logger
-
-        self.setWindowTitle("3D PCA Morphing")
-        footer_text = "3D PCA Morphing - Assignment 2 - Software Integration - 2023/24 - Université Paris-Est Créteil - by: <b>Luka Karlić</b>"
-        self.footer_label = QLabel(footer_text)
-        self.footer_label.setAlignment(Qt.AlignCenter)
-        self.ui.statusbar.addPermanentWidget(self.footer_label)
 
         # Default param
         self.InputModelLoaded = False
@@ -339,6 +332,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.pb_stop_processing.setStyleSheet(buttonStyle)
 
         self.ui.groupGUI.setStyleSheet(group_box_style)
+        self.setWindowTitle("3D PCA Morphing")
+        footer_text = "3D PCA Morphing - Assignment 2 - Software Integration - 2023/24 - Université Paris-Est Créteil - by: <b>Luka Karlić</b>"
+        self.footer_label = QLabel(footer_text)
+        self.footer_label.setAlignment(Qt.AlignCenter)
+        self.ui.statusbar.addPermanentWidget(self.footer_label)
         return
 
     def closeEvent(self, event):
