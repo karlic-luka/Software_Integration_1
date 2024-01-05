@@ -1,4 +1,4 @@
-# Real-Time FFT Window
+# Assignment1: Real-Time FFT Window
 
 This is a real-time FFT window for audio signal processing. It delivers a graphical interface for real-time audio signal processing, including denoising using a pre-trained model. 
 The GUI is built using PyQt5 and pyqtgraph, and it relies on external libraries such as numpy, torch, soundfile and PyAudio for audio processing.
@@ -44,3 +44,27 @@ The GUI is built using PyQt5 and pyqtgraph, and it relies on external libraries 
   booktitle={Interspeech},
   year={2020}
 }
+# Assignment2: PCA 3D Morphing
+This project is a software integration assignment that focuses on 3D PCA (Principal Component Analysis) for analyzing and manipulating 3D models. The main file, **assignment2.py**, serves as the entry point and incorporates several libraries, including PyQt5, OpenGL, numpy, scipy, and imageio. 
+
+## Functionality
+The project utilizes PCA to analyze and manipulate 3D models, offering users the ability to adjust texture and geometry weights. Notably, it includes **multithreading** functionality for efficient texture and geometry processing. The code showcases the integration of various libraries and provides a user-friendly interface for parameter adjustments. Users can manipulate weights for eigenvectors of the PCA using sliders in the separate parameters window.
+
+## Dependencies
+- python 3.8.18
+- see requirements.txt
+  
+## Usage
+1. Clone the directory.
+   - `git clone https://github.com/karlic-luka/Software_Integration_1.git`
+3. Install the required dependencies by running `pip install -r requirements.txt`.
+4. Position yourself at the root directory
+5. Start the application from the **root** directory
+   - `python assignment2_3D_PCA\assignment2.py`
+   - otherwise, there could be some problems with paths
+6. Load the model1.obj by clicking on **Load paths**
+7. Click **Process** to process PCA on texture and geometry
+8. Play around with the sliders (SPOILER ALERT: geometry sliders are really fun!)
+     - I challenge you to make as funny face as possible
+9. When you're done, you can save the new model by clicking on **Save 3D Face**
+
