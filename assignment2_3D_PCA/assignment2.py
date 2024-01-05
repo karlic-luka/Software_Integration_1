@@ -54,8 +54,7 @@ class PCAParametersWindow(QWidget):
         QWidget.__init__(self)
         PCA_Params_Ui_Form.__init__(self)
 
-        self.setWindowTitle(
-            'Sliders for changing texture and geometry weights')
+        self.setWindowTitle("Sliders for changing texture and geometry weights")
 
         self.params_ui = PCA_Params_Ui_Form()
         self.params_ui.setupUi(self)
@@ -67,10 +66,8 @@ class PCAParametersWindow(QWidget):
         self.connect_geom_sliders()
 
         # connect buttons
-        self.params_ui.pbReset_geometry.clicked.connect(
-            self.reset_geometry_sliders)
-        self.params_ui.pbReset_texture.clicked.connect(
-            self.reset_texture_sliders)
+        self.params_ui.pbReset_geometry.clicked.connect(self.reset_geometry_sliders)
+        self.params_ui.pbReset_texture.clicked.connect(self.reset_texture_sliders)
         self.change_design()
         self.show()
         return
@@ -78,15 +75,19 @@ class PCAParametersWindow(QWidget):
     def change_design(self):
         font = QFont("Roboto", 11)
         self.setFont(font)
-        self.setStyleSheet('background-color: #EDEDED; color: #333333;')
+        self.setStyleSheet("background-color: #EDEDED; color: #333333;")
 
-        group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
-                           "QGroupBox:title { padding: 0 3px 0 3px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
-                           "#groupBox_3 { font-weight: bold; font-size: 12px; }")
+        group_box_style = (
+            "QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
+            "QGroupBox:title { padding: 0 3px 0 3px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
+            "#groupBox_3 { font-weight: bold; font-size: 12px; }"
+        )
 
         # Customize the style of QPushButton (buttons) with a lighter shade of blue
-        button_style = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
-                        "QPushButton:hover { background-color: #5499C7; }")
+        button_style = (
+            "QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
+            "QPushButton:hover { background-color: #5499C7; }"
+        )
         # Apply the updated style to both groupBox_2 and groupBox_3
         self.params_ui.groupBox_2.setStyleSheet(group_box_style)
         self.params_ui.groupBox_3.setStyleSheet(group_box_style)
@@ -106,35 +107,34 @@ class PCAParametersWindow(QWidget):
             slider.setValue(0)
             slider.blockSignals(False)
             slider.setEnabled(False)
-        self.logger.info('Initialized sliders')
+        self.logger.info("Initialized sliders")
         return
 
     def get_all_sliders(self):
         tex_sliders = []
         for i in range(1, 11):
-            slider = getattr(self.params_ui, f'Tslider_{i}')
+            slider = getattr(self.params_ui, f"Tslider_{i}")
             tex_sliders.append(slider)
         geom_sliders = []
         for i in range(1, 23):
-            slider = getattr(self.params_ui, f'Gslider_{i}')
+            slider = getattr(self.params_ui, f"Gslider_{i}")
             geom_sliders.append(slider)
-        self.logger.info(f'Number of texture sliders: {len(tex_sliders)}')
-        self.logger.info(f'Number of geometry sliders: {len(geom_sliders)}')
+        self.logger.info(f"Number of texture sliders: {len(tex_sliders)}")
+        self.logger.info(f"Number of geometry sliders: {len(geom_sliders)}")
         return tex_sliders, geom_sliders
 
     def connect_tex_sliders(self):
         for slider in self.tex_sliders:
             slider.valueChanged.connect(self.T_SliderValueChange)
             slider.setEnabled(False)
-        self.logger.info(f'Connected {len(self.tex_sliders)} texture sliders')
+        self.logger.info(f"Connected {len(self.tex_sliders)} texture sliders")
         return
 
     def connect_geom_sliders(self):
         for slider in self.geom_sliders:
             slider.valueChanged.connect(self.G_SliderValueChange)
             slider.setEnabled(False)
-        self.logger.info(
-            f'Connected {len(self.geom_sliders)} geometry sliders')
+        self.logger.info(f"Connected {len(self.geom_sliders)} geometry sliders")
         return
 
     def reset_geometry_sliders(self):
@@ -145,7 +145,7 @@ class PCAParametersWindow(QWidget):
             slider.blockSignals(False)
         self.parent.G_SliderValueChange(0)
         self.parent.updateFrame()  # NOTE manually update the 3D model
-        self.logger.info(f'Reset geometry sliders')
+        self.logger.info(f"Reset geometry sliders")
         return
 
     def reset_texture_sliders(self):
@@ -156,7 +156,7 @@ class PCAParametersWindow(QWidget):
             slider.blockSignals(False)
         self.parent.T_SliderValueChange(0)
         self.parent.updateFrame()  # NOTE manually update the 3D model
-        self.logger.info(f'Reset texture sliders')
+        self.logger.info(f"Reset texture sliders")
         return
 
     def T_SliderValueChange(self, value):
@@ -171,32 +171,36 @@ class PCAParametersWindow(QWidget):
 
     def change_geometry_label(self, value, slider):
         try:
-            slider_id = int(slider.objectName().split('_')[-1])
+            slider_id = int(slider.objectName().split("_")[-1])
             geometry_comp_label = getattr(
-                self.params_ui, f'geom_comp_label_{slider_id}')
-            percentage = np.abs((value - slider.minimum()) /
-                                (slider.maximum() - slider.minimum()) * 100)
-            geometry_comp_label_text = f'{value} = {percentage :.1f}%'
+                self.params_ui, f"geom_comp_label_{slider_id}"
+            )
+            percentage = np.abs(
+                (value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100
+            )
+            geometry_comp_label_text = f"{value} = {percentage :.1f}%"
             geometry_comp_label.setText(geometry_comp_label_text)
         except Exception as e:
-            self.logger.info(f'Error updating geometry slider label: {e}')
+            self.logger.info(f"Error updating geometry slider label: {e}")
             self.logger.info(
-                f'Geometry weight value was probably changed by the program, not by the user.')
+                f"Geometry weight value was probably changed by the program, not by the user."
+            )
         return
 
     def change_texture_label(self, value, slider):
         try:
-            slider_id = int(slider.objectName().split('_')[-1])
-            texture_comp_label = getattr(
-                self.params_ui, f'tex_comp_label_{slider_id}')
-            percentage = np.abs((value - slider.minimum()) /
-                                (slider.maximum() - slider.minimum()) * 100)
-            texture_comp_label_text = f'{value} = {percentage :.1f}%'
+            slider_id = int(slider.objectName().split("_")[-1])
+            texture_comp_label = getattr(self.params_ui, f"tex_comp_label_{slider_id}")
+            percentage = np.abs(
+                (value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100
+            )
+            texture_comp_label_text = f"{value} = {percentage :.1f}%"
             texture_comp_label.setText(texture_comp_label_text)
         except Exception as e:
-            self.logger.info(f'Error updating texture slider label: {e}')
+            self.logger.info(f"Error updating texture slider label: {e}")
             self.logger.info(
-                f'Texture weight value was probably changed by the program, not by the user.')
+                f"Texture weight value was probably changed by the program, not by the user."
+            )
         return
 
 
@@ -210,12 +214,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.create_logger()
-        self.params_window = PCAParametersWindow(
-            parent=self, logger=self.logger)
+        self.params_window = PCAParametersWindow(parent=self, logger=self.logger)
         # create logger
 
-        self.setWindowTitle('3D PCA Morphing')
-        footer_text = '3D PCA Morphing - Assignment 2 - Software Integration - 2023/24 - Université Paris-Est Créteil - by: <b>Luka Karlić</b>'
+        self.setWindowTitle("3D PCA Morphing")
+        footer_text = "3D PCA Morphing - Assignment 2 - Software Integration - 2023/24 - Université Paris-Est Créteil - by: <b>Luka Karlić</b>"
         self.footer_label = QLabel(footer_text)
         self.footer_label.setAlignment(Qt.AlignCenter)
         self.ui.statusbar.addPermanentWidget(self.footer_label)
@@ -282,17 +285,15 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.finished_threads_counter = 0
         self.pca_texture_thread = TextureThreadClass(logger=self.logger)
         self.pca_texture_thread.finished.connect(self.PCA_Tex)
-        self.pca_texture_thread.updated.connect(
-            self.update_texture_progress_bar)
+        self.pca_texture_thread.updated.connect(self.update_texture_progress_bar)
         self.pca_geometry_thread = GeometryThreadClass(logger=self.logger)
         self.pca_geometry_thread.finished.connect(self.PCA_Geo)
-        self.pca_geometry_thread.updated.connect(
-            self.update_geometry_progress_bar)
+        self.pca_geometry_thread.updated.connect(self.update_geometry_progress_bar)
 
         # Colors/Design examples
         # Main Window
         self.setup_styles()
-        self.logger.info('Application started')
+        self.logger.info("Application started")
         return
 
     def create_logger(self):
@@ -307,22 +308,31 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         logs_path = os.path.join(os.getcwd(), "assignment2_3D_PCA", "logs")
         if not os.path.exists(logs_path):
             os.makedirs(logs_path)
-        self.handler = logging.FileHandler(os.path.join(
-            logs_path, f'{time.strftime("%Y%m%d-%H%M%S")}_3D_PCA_morphing.log'))
-        self.handler.setFormatter(logging.Formatter(
-            '%(asctime)s:%(levelname)s:%(message)s'))
+        self.handler = logging.FileHandler(
+            os.path.join(
+                logs_path, f'{time.strftime("%Y%m%d-%H%M%S")}_3D_PCA_morphing.log'
+            )
+        )
+        self.handler.setFormatter(
+            logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
+        )
         self.logger.addHandler(self.handler)
         return
 
     def setup_styles(self):
         self.ui.centralwidget.setStyleSheet(
-            'background-color: #EDEDED; color: #333333;')
-        group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
-                           "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
-                           "#groupBox_3 { font-weight: bold; font-size: 18px; }")
+            "background-color: #EDEDED; color: #333333;"
+        )
+        group_box_style = (
+            "QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
+            "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
+            "#groupBox_3 { font-weight: bold; font-size: 18px; }"
+        )
 
-        buttonStyle = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
-                       "QPushButton:hover { background-color: #5499C7; }")
+        buttonStyle = (
+            "QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
+            "QPushButton:hover { background-color: #5499C7; }"
+        )
         self.ui.LoadFile.setStyleSheet(buttonStyle)
         self.ui.Process.setStyleSheet(buttonStyle)
         self.ui.exportResult.setStyleSheet(buttonStyle)
@@ -332,28 +342,28 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         return
 
     def closeEvent(self, event):
-        self.logger.info('Inside closeEvent')
-        if hasattr(self, 'pca_texture_thread'):
+        self.logger.info("Inside closeEvent")
+        if hasattr(self, "pca_texture_thread"):
             if self.pca_texture_thread.isRunning():
                 self.pca_texture_thread.requestInterruption()
                 self.pca_texture_thread.stop()
                 self.pca_texture_thread.quit()
 
-        if hasattr(self, 'pca_geometry_thread'):
+        if hasattr(self, "pca_geometry_thread"):
             if self.pca_geometry_thread.isRunning():
                 self.pca_geometry_thread.requestInterruption()
                 self.pca_geometry_thread.stop()
                 self.pca_geometry_thread.quit()
-        self.logger.info('Closing application')
+        self.logger.info("Closing application")
         return
 
     def stop_threads(self):
-        self.logger.info('Stopping threads manually')
-        if hasattr(self, 'pca_texture_thread'):
+        self.logger.info("Stopping threads manually")
+        if hasattr(self, "pca_texture_thread"):
             if self.pca_texture_thread.isRunning():
                 self.pca_texture_thread.requestInterruption()
 
-        if hasattr(self, 'pca_geometry_thread'):
+        if hasattr(self, "pca_geometry_thread"):
             if self.pca_geometry_thread.isRunning():
                 self.pca_geometry_thread.requestInterruption()
 
@@ -372,18 +382,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             # To display a popup window that will be used to select a file (.obj or .png)
             # The .obj and .png should have the same name!
             self.myFile = QFileDialog.getOpenFileName(
-                None, 'OpenFile', "", "3D object(*.obj);;Texture(*.png)")
+                None, "OpenFile", "", "3D object(*.obj);;Texture(*.png)"
+            )
             self.myPath = self.myFile[0]
             # If the extension is .obj (or .png), will remove the 4 last characters (== the extension)
             self.GlobalNameWithoutExtension = self.myPath[:-4]
             self.FileNameWithExtension = QFileInfo(
-                self.myFile[0]).fileName()  # Just the filename
-            if self.myFile[0] == self.myFile[1] == '':
+                self.myFile[0]
+            ).fileName()  # Just the filename
+            if self.myFile[0] == self.myFile[1] == "":
                 # No file selected or cancel button clicked - so do nothing
                 pass
             else:
                 self.InputModel = self.TarModel = []
-                self.InputModelLoaded = self.InputTextureLoaded = self.InputListCreated = False
+                self.InputModelLoaded = (
+                    self.InputTextureLoaded
+                ) = self.InputListCreated = False
                 self.InputTexturePath = self.GlobalNameWithoutExtension + ".png"
 
                 # Will use the class OBJ to read our 3D file and extract everything
@@ -391,8 +405,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
                 imsave("TarTexture" + ".png", imread(self.InputTexturePath))
 
-                self.TarTexturePath = '/'.join(self.myPath.split('/')
-                                               [:-1]) + '/TarTexture.png'
+                self.TarTexturePath = (
+                    "/".join(self.myPath.split("/")[:-1]) + "/TarTexture.png"
+                )
                 self.TarModel = self.InputModel
 
                 # We read the 2 files, so we can now set the boolean value to True
@@ -402,12 +417,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.glWidget.update()
 
         except IOError as e:
-            self.logger.info(f'Error loading file: {e}')
-            self.logger.info(f'File path: {self.myFile}')
+            self.logger.info(f"Error loading file: {e}")
+            self.logger.info(f"File path: {self.myFile}")
         except ValueError:
-            self.logger.info('Value Error.')
+            self.logger.info("Value Error.")
         except:
-            self.logger.info(f'Unexpected error: {sys.exc_info()[0]}')
+            self.logger.info(f"Unexpected error: {sys.exc_info()[0]}")
             raise
 
     def ProcessClicked(self):
@@ -418,8 +433,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def on_PCA_is_finished(self):
         self.PCA_done = True
 
-        self.logger.info(f'Inside on_PCA_is_finished')
-        self.logger.info(f'Updating Texture sliders')
+        self.logger.info(f"Inside on_PCA_is_finished")
+        self.logger.info(f"Updating Texture sliders")
         # update texture sliders
         tex_initialized = False
         for slider_id, slider in enumerate(self.params_window.tex_sliders):
@@ -430,14 +445,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 tex_initialized = True
             slider.blockSignals(False)
             slider.setEnabled(True)
-            min_temp = self.Root['Tex']['WTex'][0][slider_id]
-            max_temp = self.Root['Tex']['WTex'][1][slider_id]
+            min_temp = self.Root["Tex"]["WTex"][0][slider_id]
+            max_temp = self.Root["Tex"]["WTex"][1][slider_id]
             S = self.checkSign(round(min_temp), round(max_temp))
             Tmin = round(S * min_temp)
             Tmax = round(S * max_temp)
             slider.setRange(Tmin, Tmax)
 
-        self.logger.info(f'Updating Geometry sliders')
+        self.logger.info(f"Updating Geometry sliders")
         geometry_initialized = False
         # update geometry sliders
         for slider_id, slider in enumerate(self.params_window.geom_sliders):
@@ -448,68 +463,69 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 geometry_initialized = True
             slider.blockSignals(False)
             slider.setEnabled(True)
-            Gmin = round(self.Root['models']['WGeo'][0][slider_id])
-            Gmax = round(self.Root['models']['WGeo'][1][slider_id])
+            Gmin = round(self.Root["models"]["WGeo"][0][slider_id])
+            Gmax = round(self.Root["models"]["WGeo"][1][slider_id])
             slider.setRange(Gmin, Gmax)
         return
 
     def PCA_Tex(self, result: dict):
-        eigenvectors_transposed_flattened = result['eigenvectors_transposed_flattened'].copy(
-        )
-        texture_mean = result['mean'].copy()
-        texture_weights = result['weights'].copy()
+        eigenvectors_transposed_flattened = result[
+            "eigenvectors_transposed_flattened"
+        ].copy()
+        texture_mean = result["mean"].copy()
+        texture_weights = result["weights"].copy()
         try:
-            self.Root['Tex'] = {}
+            self.Root["Tex"] = {}
 
             # Save results
             # eigenvector variable (transpose/flatten)
-            self.Root['Tex']['VrTex'] = eigenvectors_transposed_flattened
+            self.Root["Tex"]["VrTex"] = eigenvectors_transposed_flattened
             # average texture variable
-            self.Root['Tex']['XmTex'] = texture_mean
+            self.Root["Tex"]["XmTex"] = texture_mean
             texture_weights *= TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR
             # save min and max weights for each row
             temp_minimums = np.min(texture_weights, axis=1)
             temp_maximums = np.max(texture_weights, axis=1)
-            self.logger.info(f'Texture weights min: {temp_minimums}')
-            self.logger.info(f'Texture weights max: {temp_maximums}')
-            self.Root['Tex']['WTex'] = [temp_minimums, temp_maximums]
+            self.logger.info(f"Texture weights min: {temp_minimums}")
+            self.logger.info(f"Texture weights max: {temp_maximums}")
+            self.Root["Tex"]["WTex"] = [temp_minimums, temp_maximums]
 
         except Exception as e:
-            self.logger.info(f'PCA_Tex Error: {e}')
+            self.logger.info(f"PCA_Tex Error: {e}")
             return
         self.b_ProcessDone = True
         self.finished_threads_counter += 1
         if self.finished_threads_counter == 2:
             self.on_PCA_is_finished()
-        self.logger.info(f'COUNTER: {self.finished_threads_counter}')
-        self.logger.info(f'PCA_Tex DONE.')
+        self.logger.info(f"COUNTER: {self.finished_threads_counter}")
+        self.logger.info(f"PCA_Tex DONE.")
         return
 
     def PCA_Geo(self, result: dict):
-        eigenvectors_transposed = result['eigenvectors_transposed'].copy()
-        geometry_mean = result['mean'].copy()
-        geometry_weights = result['weights'].copy()
+        eigenvectors_transposed = result["eigenvectors_transposed"].copy()
+        geometry_mean = result["mean"].copy()
+        geometry_weights = result["weights"].copy()
         try:
-            self.Root['models'] = {}
+            self.Root["models"] = {}
             # eigenvector variable (transpose)
-            self.Root['models']['VrGeo'] = eigenvectors_transposed
+            self.Root["models"]["VrGeo"] = eigenvectors_transposed
             # average texture variable
-            self.Root['models']['XmGeo'] = geometry_mean
+            self.Root["models"]["XmGeo"] = geometry_mean
             geometry_weights *= GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR
             temp_minimums = np.min(geometry_weights, axis=1)
             temp_maximums = np.max(geometry_weights, axis=1)
-            self.Root['models']['WGeo'] = [temp_minimums, temp_maximums]
+            self.Root["models"]["WGeo"] = [temp_minimums, temp_maximums]
 
         except Exception as e:
-            self.logger.info(f'PCA_Geo Error: {e}')
+            self.logger.info(f"PCA_Geo Error: {e}")
             return
 
         self.b_Process2Done = True
         self.finished_threads_counter += 1
         if self.finished_threads_counter == 2:
             self.on_PCA_is_finished()
-        self.logger.info(f'COUNTER: {self.finished_threads_counter}')
-        self.logger.info(f'PCA_Geo DONE.')
+        self.logger.info(f"COUNTER: {self.finished_threads_counter}")
+        self.logger.info(f"PCA_Geo DONE.")
 
         return
 
@@ -519,21 +535,23 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.texture_slider_weights = []
         for i in range(len(self.params_window.tex_sliders)):
             self.texture_slider_weights.append(
-                self.params_window.tex_sliders[i].value())
+                self.params_window.tex_sliders[i].value()
+            )
         self.texture_slider_weights = np.array(self.texture_slider_weights)
-        self.logger.info(
-            f'Texture slider weights: {self.texture_slider_weights}')
+        self.logger.info(f"Texture slider weights: {self.texture_slider_weights}")
 
         if self.b_ProcessDone == True and self.b_Process2Done == True:
             try:
                 # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
-                self.N_TarTex = self.Root['Tex']['XmTex'].copy()
+                self.N_TarTex = self.Root["Tex"]["XmTex"].copy()
                 for i in range(len(self.params_window.tex_sliders)):
                     # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
                     self.N_TarTex += np.dot(
-                        self.texture_slider_weights[i], self.Root['Tex']['VrTex'][i].copy())
+                        self.texture_slider_weights[i],
+                        self.Root["Tex"]["VrTex"][i].copy(),
+                    )
             except Exception as e:
-                self.logger.info(f'New target texture Error: {e}')
+                self.logger.info(f"New target texture Error: {e}")
 
             try:
                 self.TarTexture = np.reshape(self.N_TarTex, (256, 256, 4))
@@ -541,13 +559,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.TarTexture[self.TarTexture > 1] = 1
                 self.TarTexture = (self.TarTexture * 255).astype(np.uint8)
             except Exception as e:
-                self.logger.info(f'TarTexture Error: {e}')
+                self.logger.info(f"TarTexture Error: {e}")
 
             # Save the new texture
             try:
                 imageio.v2.imsave("TarTexture" + ".png", self.TarTexture)
             except Exception as e:
-                self.logger.info(f'TarTexture Save error: {e}')
+                self.logger.info(f"TarTexture Save error: {e}")
 
         return
 
@@ -556,68 +574,66 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.Gval = value
         self.geom_slider_weights = []
         for i in range(len(self.params_window.geom_sliders)):
-            self.geom_slider_weights.append(
-                self.params_window.geom_sliders[i].value())
+            self.geom_slider_weights.append(self.params_window.geom_sliders[i].value())
         self.geom_slider_weights = np.array(self.geom_slider_weights)
-        self.logger.info(
-            f'Geometry slider weights: {self.geom_slider_weights}')
+        self.logger.info(f"Geometry slider weights: {self.geom_slider_weights}")
 
         if self.b_ProcessDone == True and self.b_Process2Done == True:
-
             try:
                 # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
-                self.N_TarModel = self.Root['models']['XmGeo'].copy()
+                self.N_TarModel = self.Root["models"]["XmGeo"].copy()
                 for i in range(len(self.params_window.geom_sliders)):
                     # NOTE: without copy() it doesn't work!!! POST MORTEM: it's because of the reference
                     self.N_TarModel += np.dot(
-                        self.geom_slider_weights[i], self.Root['models']['VrGeo'][i].copy())
+                        self.geom_slider_weights[i],
+                        self.Root["models"]["VrGeo"][i].copy(),
+                    )
 
             except Exception as e:
-                self.logger.info(f'New target model: {e}')
+                self.logger.info(f"New target model: {e}")
 
             arr_3d = np.zeros((5904, 3))
 
             for i in range(5904):
                 arr_3d[i, 0] = self.N_TarModel[i]
                 arr_3d[i, 1] = self.N_TarModel[i + 5904]
-                arr_3d[i, 2] = self.N_TarModel[i + 2*5904]
+                arr_3d[i, 2] = self.N_TarModel[i + 2 * 5904]
 
             row = temp = []
             for i in range(5904):
-                row = float(arr_3d[i, 0]), float(
-                    arr_3d[i, 1]), float(arr_3d[i, 2])
+                row = float(arr_3d[i, 0]), float(arr_3d[i, 1]), float(arr_3d[i, 2])
                 temp.append(row)
             # self.TarModel.vertices is the new 3D model
             try:
                 self.TarModel.vertices = temp
             except Exception as e:
-                self.logger.info(f'Error updating TarModel.vertices: {e}')
+                self.logger.info(f"Error updating TarModel.vertices: {e}")
 
     def SaveOBJ(self):
         try:
-            with open(self.GlobalNameWithoutExtension + ".obj", 'r') as file:
+            with open(self.GlobalNameWithoutExtension + ".obj", "r") as file:
                 original_lines = file.readlines()
             file.close()
 
             temp_vertices = self.TarModel.vertices.copy()
             if len(temp_vertices) != 5904:
-                self.logger.info(f'Error: Wrong number of vertices')
+                self.logger.info(f"Error: Wrong number of vertices")
                 return
 
             for idx, line in enumerate(original_lines):
                 # space after v is important to avoid matching vt
-                if line.startswith('v '):
+                if line.startswith("v "):
                     row = temp_vertices.pop(0)
-                    original_lines[idx] = f'v {row[0]} {row[1]} {row[2]}\n'
+                    original_lines[idx] = f"v {row[0]} {row[1]} {row[2]}\n"
 
             newfile_name = self.GlobalNameWithoutExtension + "_new_model.obj"
-            with open(newfile_name, 'w') as file:
+            with open(newfile_name, "w") as file:
                 file.writelines(original_lines)
-            self.logger.info(f'Saved new model to {newfile_name}')
+            self.logger.info(f"Saved new model to {newfile_name}")
             file.close()
 
         except Exception as e:
-            self.logger.info(f'Error writing new model: {e}')
+            self.logger.info(f"Error writing new model: {e}")
         return
 
     def checkSign(self, W1, W2):
@@ -650,6 +666,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     def updateFrame(self):
         self.glWidget.update()
+
 
 ####################################################################################################
 # The OpenGL Widget --- it's normally not needed to touch this part especially paintGL
@@ -684,7 +701,6 @@ class GLWidget(QGLWidget):
         self.tex = glGenTextures(1)
 
     def paintGL(self):
-
         self.InputModelLoaded = self.parent.InputModelLoaded
         self.InputTextureLoaded = self.parent.InputTextureLoaded
         self.InputTexturePath = self.parent.InputTexturePath
@@ -768,8 +784,7 @@ class GLWidget(QGLWidget):
                 # display input 3D model
                 if self.InputModelLoaded == True and self.InputTextureLoaded == True:
                     self.updated.emit(1)
-                    glClearColor(self.bg_color, self.bg_color,
-                                 self.bg_color, 1.0)
+                    glClearColor(self.bg_color, self.bg_color, self.bg_color, 1.0)
                     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
                     glMatrixMode(GL_PROJECTION)
                     glLoadIdentity()  # identity matrix, resets the matrix back to its default state
@@ -785,14 +800,11 @@ class GLWidget(QGLWidget):
                     glPushMatrix()  # Save any translate/scale/rotate operations that you previously used
                     # In InputModel.vertices you have the coordinates of the vertices (X,Y,Z)
                     # Here you will extract X
-                    InputModel_Xs = [row[0]
-                                     for row in self.InputModel.vertices]
+                    InputModel_Xs = [row[0] for row in self.InputModel.vertices]
                     # Here you will extract Y
-                    InputModel_Ys = [row[1]
-                                     for row in self.InputModel.vertices]
+                    InputModel_Ys = [row[1] for row in self.InputModel.vertices]
                     # Here you will extract Z
-                    InputModel_Zs = [row[2]
-                                     for row in self.InputModel.vertices]
+                    InputModel_Zs = [row[2] for row in self.InputModel.vertices]
                     # A 3D object can have coordinates not always centered on 0
                     # So we are calculating u0,v0,w0 (center of mass/gravity of the 3D model)
                     # To be able to move it after to the center of the scene
@@ -809,7 +821,11 @@ class GLWidget(QGLWidget):
                     glTranslate(-u0, -v0, -w0)
                     # Display 3D Model via a CallList (GOOD, extremely fast!)
                     # If the list is not created, we will do it
-                    if self.InputModelLoaded == True and self.InputTextureLoaded == True and self.InputListCreated == False:
+                    if (
+                        self.InputModelLoaded == True
+                        and self.InputTextureLoaded == True
+                        and self.InputListCreated == False
+                    ):
                         # pdb.set_trace()
                         # This is how to set up a display list, whose invocation by glCallList
                         # Allocate one list into memory
@@ -826,7 +842,11 @@ class GLWidget(QGLWidget):
                         # Call the list (display the model)
                         glCallList(self.glinputModel)
                     # If the list is already created, no need to process again and loose time, just display it
-                    elif self.InputModelLoaded == True and self.InputTextureLoaded == True and self.InputListCreated == True:
+                    elif (
+                        self.InputModelLoaded == True
+                        and self.InputTextureLoaded == True
+                        and self.InputListCreated == True
+                    ):
                         # however, if we are changing the mode (Faces/Points), we need to recreate again the list
                         if self.Updated == True:
                             # Here we have to create the list again because it's not exactly the same list
@@ -848,7 +868,6 @@ class GLWidget(QGLWidget):
 
             # If the PCA is done, we will display the new model here
             else:
-
                 glClearColor(self.bg_color, self.bg_color, self.bg_color, 1.0)
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
                 glMatrixMode(GL_PROJECTION)
@@ -892,7 +911,11 @@ class GLWidget(QGLWidget):
                     self.c_mode = self.r_mode
                     glCallList(self.targetModel)
                 elif self.TargetListCreated == True:
-                    if self.c_mode == self.r_mode and self.old_Gval == self.Gval and self.old_Tval == self.Tval:
+                    if (
+                        self.c_mode == self.r_mode
+                        and self.old_Gval == self.Gval
+                        and self.old_Tval == self.Tval
+                    ):
                         glCallList(self.targetModel)
                     else:
                         self.targetModel = glGenLists(1)
@@ -918,11 +941,18 @@ class GLWidget(QGLWidget):
                 for j in F:
                     glColor3ub(255, 255, 255)
                     glTexCoord2f(
-                        InputModel.texcoords[j-1][0], InputModel.texcoords[j-1][1])
+                        InputModel.texcoords[j - 1][0], InputModel.texcoords[j - 1][1]
+                    )
                     glNormal3d(
-                        InputModel.normals[j-1][0], InputModel.normals[j-1][1], InputModel.normals[j-1][2])
+                        InputModel.normals[j - 1][0],
+                        InputModel.normals[j - 1][1],
+                        InputModel.normals[j - 1][2],
+                    )
                     glVertex3d(
-                        InputModel.vertices[j-1][0], InputModel.vertices[j-1][1], InputModel.vertices[j-1][2])
+                        InputModel.vertices[j - 1][0],
+                        InputModel.vertices[j - 1][1],
+                        InputModel.vertices[j - 1][2],
+                    )
             glEnd()
             glDisable(GL_TEXTURE_2D)
         elif self.r_mode == "Points":
@@ -931,12 +961,17 @@ class GLWidget(QGLWidget):
             glBegin(GL_POINTS)
             for i in range(len(InputModel.vertices)):
                 glColor3ub(255, 255, 255)
-                glTexCoord2f(
-                    InputModel.texcoords[i][0], InputModel.texcoords[i][1])
+                glTexCoord2f(InputModel.texcoords[i][0], InputModel.texcoords[i][1])
                 glNormal3d(
-                    InputModel.normals[i][0], InputModel.normals[i][1], InputModel.normals[i][2])
-                glVertex3d(int(InputModel.vertices[i][0]), int(
-                    InputModel.vertices[i][1]), int(InputModel.vertices[i][2]))
+                    InputModel.normals[i][0],
+                    InputModel.normals[i][1],
+                    InputModel.normals[i][2],
+                )
+                glVertex3d(
+                    int(InputModel.vertices[i][0]),
+                    int(InputModel.vertices[i][1]),
+                    int(InputModel.vertices[i][2]),
+                )
             glEnd()
             glDisable(GL_TEXTURE_2D)
 
@@ -946,8 +981,17 @@ class GLWidget(QGLWidget):
         glBindTexture(GL_TEXTURE_2D, self.tex)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(
-        ), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits().asstring(img.byteCount()))
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            img.width(),
+            img.height(),
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            img.bits().asstring(img.byteCount()),
+        )
 
     def applyTarTexture(self, TarTexture):
         img = QImage("TarTexture.png")
@@ -955,8 +999,17 @@ class GLWidget(QGLWidget):
         glBindTexture(GL_TEXTURE_2D, self.tex)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width(), img.height(
-        ), 0, GL_RGBA, GL_UNSIGNED_BYTE, img.bits().asstring(img.byteCount()))
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            img.width(),
+            img.height(),
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            img.bits().asstring(img.byteCount()),
+        )
 
     def mousePressEvent(self, event):
         self.lastPos = event.pos()
@@ -973,16 +1026,22 @@ class GLWidget(QGLWidget):
     def mouseMoveEvent(self, event):
         dx = event.x() - self.lastPos.x()
         dy = event.y() - self.lastPos.y()
-        if event.buttons() & Qt.LeftButton:  # holding left button of mouse and moving will rotate the object
+        if (
+            event.buttons() & Qt.LeftButton
+        ):  # holding left button of mouse and moving will rotate the object
             self.setXRotation(self.xRot + 8 * dy)
             self.setYRotation(self.yRot + 8 * dx)
             self.LeftXRot = self.xRot + 8 * dy
             self.LeftYRot = self.yRot + 8 * dx
-        elif event.buttons() & Qt.RightButton:  # holding right button of mouse and moving will translate the object
+        elif (
+            event.buttons() & Qt.RightButton
+        ):  # holding right button of mouse and moving will translate the object
             self.Tx += dx / 100
             self.Ty -= dy / 100
             self.updateGL()
-        elif event.buttons() & Qt.MidButton:  # holding middle button of mouse and moving will reset zoom/translations
+        elif (
+            event.buttons() & Qt.MidButton
+        ):  # holding middle button of mouse and moving will reset zoom/translations
             self.Tx = Ty = 0
             self.Tz = 1
             self.setXRotation(0)
@@ -1037,7 +1096,7 @@ class GLWidget(QGLWidget):
         return angle
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MyMainWindow()
     window.show()
