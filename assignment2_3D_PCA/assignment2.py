@@ -58,10 +58,153 @@ class PCAParametersWindow(QWidget):
         self.connect_tex_sliders()
         self.connect_geom_sliders()
 
-        # connect buttons   
-        
+        # connect buttons
+        self.change_design()
         self.show()
         return
+    
+    def change_design(self):
+        ### Colors/Design examples
+        # Main Window
+        # self.setStyleSheet('background-color: #333; color: white;')
+        # # Common style for groupBox_2 and groupBox_3
+        # group_box_style = (
+        #     "QGroupBox {"
+        #     "   border-radius: 9px;"
+        #     "   border: 2px solid #888888;"
+        #     "   margin-top: 0.5em;"
+        #     "}"
+        #     "QGroupBox:title {"
+        #     "   padding: 0 6px 0 6px;"
+        #     "   background-color: #333;"
+        #     "   subcontrol-origin: margin;"
+        #     "   subcontrol-position: top center;"
+        #     "}"
+        #     "font-weight: bold;"
+        #     "font-size: 18px;"
+        # )
+
+        # # Apply the common style to both groupBox_2 and groupBox_3
+        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
+        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
+
+        # Overall background color and text color for the main widget
+        # self.setStyleSheet('background-color: #1E1E1E; color: #FFFFFF;')
+
+        # # Common style for groupBox_2 and groupBox_3
+        # group_box_style = (
+        #     "QGroupBox {"
+        #     "   border: 2px solid #3E3E3E;"
+        #     "   border-radius: 10px;"
+        #     "   margin-top: 0.5em;"
+        #     "}"
+        #     "QGroupBox:title {"
+        #     "   subcontrol-origin: margin;"
+        #     "   subcontrol-position: top center;"
+        #     "   padding: 0 10px 0 10px;"
+        #     "   background-color: #333333;"
+        #     "   color: #FFFFFF;"
+        #     "   font-weight: bold;"
+        #     "   font-size: 18px;"
+        #     "}"
+        # )
+
+        # # Apply the updated style to both groupBox_2 and groupBox_3
+        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
+        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
+
+        # Overall background color and text color for the main widget
+        # self.setStyleSheet('background-color: #F0F0F0; color: #333333;')
+
+        # # Common style for groupBox_2 and groupBox_3
+        # group_box_style = (
+        #     "QGroupBox {"
+        #     "   border: 2px solid #CCCCCC;"
+        #     "   border-radius: 5px;"
+        #     "   margin-top: 0.5em;"
+        #     "}"
+        #     "QGroupBox:title {"
+        #     "   subcontrol-origin: margin;"
+        #     "   subcontrol-position: top center;"
+        #     "   padding: 5px 10px;"
+        #     "   background-color: #E0E0E0;"
+        #     "   color: #333333;"
+        #     "   font-weight: bold;"
+        #     "   font-size: 16px;"
+        #     "}"
+        # )
+
+        # # Apply the updated style to both groupBox_2 and groupBox_3
+        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
+        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
+
+        # Overall background color and text color for the main widget
+        # self.setStyleSheet('background-color: #EDEDED; color: #333333;')
+
+        # # Common style for groupBox_2 and groupBox_3
+        # group_box_style = (
+        #     "QGroupBox {"
+        #     "   border: 2px solid #A0A0A0;"
+        #     "   border-radius: 8px;"
+        #     "   margin-top: 0.5em;"
+        #     "   background-color: #FFFFFF;"
+        #     "}"
+        #     "QGroupBox:title {"
+        #     "   subcontrol-origin: margin;"
+        #     "   subcontrol-position: top center;"
+        #     "   padding: 8px 15px;"
+        #     "   background-color: #4CAF50;"  # Green title background
+        #     "   color: #FFFFFF;"
+        #     "   font-weight: bold;"
+        #     "   font-size: 16px;"
+        #     "}"
+        # )
+
+        # # Apply the updated style to both groupBox_2 and groupBox_3
+        # self.params_ui.groupBox_2.setStyleSheet(group_box_style)
+        # self.params_ui.groupBox_3.setStyleSheet(group_box_style)
+
+        # Apply the updated style to both groupBox_2 and groupBox_3
+        font = QFont("Roboto", 11)  # You can adjust the size as needed
+
+        # Set the font for the main widget
+        self.setFont(font)
+        # Overall background color and text color for the main widget
+        self.setStyleSheet('background-color: #EDEDED; color: #333333;')
+
+        # Common style for groupBox_2 and groupBox_3
+        group_box_style = (
+            "QGroupBox {"
+            "   border: 2px solid #4682B4;"  # Steel Blue border
+            "   border-radius: 8px;"
+            "   margin-top: 0.5em;"
+            "   background-color: #FFFFFF;"
+            "}"
+            "QGroupBox:title {"
+            "   subcontrol-origin: margin;"
+            "   subcontrol-position: top center;"
+            "   padding: 8px 15px;"
+            "   background-color: #4682B4;"  # Steel Blue title background
+            "   color: #FFFFFF;"
+            "   font-weight: bold;"  # Make the title text bold
+            "   font-size: 16px;"
+            "}"
+        )
+
+        group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
+                         "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
+                         "#groupBox_3 { font-weight: bold; font-size: 18px; }")
+
+        # Customize the style of QPushButton (buttons) with a lighter shade of blue
+        button_style = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
+                       "QPushButton:hover { background-color: #5499C7; }")
+        # Apply the updated style to both groupBox_2 and groupBox_3
+        self.params_ui.groupBox_2.setStyleSheet(group_box_style)
+        self.params_ui.groupBox_3.setStyleSheet(group_box_style)
+        self.params_ui.pbReset_texture.setStyleSheet(button_style)
+        self.params_ui.pbReset_geometry.setStyleSheet(button_style)
+        return
+
 
     def initialize_sliders(self):
         print(f'Inside PCAParametersWindow.initialize_sliders')
@@ -219,16 +362,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.exportResult.clicked.connect(self.SaveOBJ)
         self.ui.pb_stop_processing.clicked.connect(self.stop_threads)
 
-        # Sliders
-        # Connect the slider to the function T_SliderValueChange
-        # self.ui.Tslider.valueChanged.connect(self.T_SliderValueChange)
-        # # Connect the slider to the function G_SliderValueChange
-        # self.ui.Gslider.valueChanged.connect(self.G_SliderValueChange)
-
-        # # Disable buttons/sliders before PCA
-        # self.ui.Tslider.setEnabled(False)
-        # self.ui.Gslider.setEnabled(False)
-
         # connect threads
         self.finished_threads_counter = 0
         self.pca_texture_thread = TextureThreadClass()
@@ -238,7 +371,43 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pca_geometry_thread.finished.connect(self.PCA_Geo)
         self.pca_geometry_thread.updated.connect(self.update_geometry_progress_bar)
 
+        ### Colors/Design examples
+        # Main Window
+        self.setup_styles()
+        self.setStyleSheet('background-color: #333; color: white;')
 
+        return
+    
+    def setup_styles(self):
+        # Set the background color of the main window
+        # self.ui.centralwidget.setStyleSheet('background-color: #333; color: white;')
+        self.ui.centralwidget.setStyleSheet('background-color: #EDEDED; color: #333333;')
+
+        # group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
+        #                  "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
+        #                  "#groupBox_3 { font-weight: bold; font-size: 18px; }")
+        
+        # # Customize the style of QPushButton (buttons) with a lighter shade of blue
+        # buttonStyle = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
+        #                "QPushButton:hover { background-color: #5499C7; }")
+        group_box_style = ("QGroupBox { border-radius: 9px; border: 2px solid #3498DB; margin-top: 0.5em; background-color: #85C1E9; }"
+                         "QGroupBox:title { padding: 0 6px 0 6px; background-color: #3498DB; subcontrol-origin: margin; subcontrol-position: top center; color: white;}"
+                         "#groupBox_3 { font-weight: bold; font-size: 18px; }")
+
+        # Customize the style of QPushButton (buttons) with a lighter shade of blue
+        buttonStyle = ("QPushButton { background-color: #5DADE2; border: 2px solid #3498DB; color: white; border-radius: 5px; padding: 5px; }"
+                       "QPushButton:hover { background-color: #5499C7; }")
+        # Apply the style to the buttons
+        self.ui.LoadFile.setStyleSheet(buttonStyle)
+        self.ui.Process.setStyleSheet(buttonStyle)
+        self.ui.exportResult.setStyleSheet(buttonStyle)
+        self.ui.pb_stop_processing.setStyleSheet(buttonStyle)
+        
+
+        # Apply the style to a specific QGroupBox (replace groupBox_3 with the actual name of your group box)
+        self.ui.groupGUI.setStyleSheet(group_box_style)
+        return
+    
     def closeEvent(self, event):
         print(f'Inside closeEvent')
         if hasattr(self, 'pca_texture_thread'):
@@ -525,17 +694,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             except Exception as e:
                 print('TarTexture Save error:', e)
 
-        # try:
-        #     self.ui.Tslider.blockSignals(True)
-        #     self.ui.Tslider.setValue(value)
-        #     # minimum is 0%, 0 is 50%, maximum is 100%
-        #     percentage = np.abs((value - self.ui.Tslider.minimum()) / (self.ui.Tslider.maximum() - self.ui.Tslider.minimum()) * 100)
-        #     texture_text_label = f'{value} = {percentage : .1f}%'
-        #     self.ui.textinputtarget.setText(texture_text_label)
-        #     self.ui.Tslider.blockSignals(False)
-        # except Exception as e:
-        #     print(f'Error updating texture slider: {e}')
-        # TODO change labels for all sliders
         return
 
     def G_SliderValueChange(self, value):
@@ -598,18 +756,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.TarModel.vertices = temp
             except Exception as e:
                 print(e)
-
-        # try:
-        #     self.ui.Gslider.blockSignals(True)
-        #     self.ui.Gslider.setValue(value)
-        #     # minimum is 0%, 0 is 50%, maximum is 100%
-        #     percentage = np.abs((value - self.ui.Gslider.minimum()) / (self.ui.Gslider.maximum() - self.ui.Gslider.minimum()) * 100)
-        #     model_text_label = f'{value} = {percentage : .1f}%'
-        #     self.ui.textmodels.setText(model_text_label)
-        #     self.ui.Gslider.blockSignals(False)
-        # except Exception as e:
-        #     print(e)
-        # TODO change labels for all sliders
 
     def SaveOBJ(self):
         ###########################################
