@@ -37,6 +37,8 @@ from pca_threads import TextureThreadClass, GeometryThreadClass
 
 TEXTURE_WEIGHTS_MULTIPLICATIVE_FACTOR = 2
 GEOMETRY_WEIGHTS_MULTIPLICATIVE_FACTOR = 1
+# TODO add title, my name etc.
+# TODO add RESET button to set all sliders to 0
 
 class PCAParametersWindow(QWidget):
     def __init__(self, parent):
@@ -108,24 +110,19 @@ class PCAParametersWindow(QWidget):
         # TODO prebaciti mozda ovdje jer mi se cini kao da se zablokira GUI kada se ovo pozove
         # print(f'Inside PCAParametersWindow.T_SliderValueChange')
         # change label
-        try:
-            slider = self.sender()
-            slider_id = int(slider.objectName().split('_')[-1])
-            texture_comp_label = getattr(self.params_ui, f'tex_comp_label_{slider_id}')
-            percentage = np.abs((value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100)
-            texture_comp_label_text = f'{value} = {percentage : .1f}%'
-            texture_comp_label.setText(texture_comp_label_text)
-        except Exception as e:
-            print(f'Error updating texture slider label: {e}')
-            print(f'Texture weight value was probably changed by the program, not by the user.')
+        self.change_texture_label(value, self.sender())
         self.parent.T_SliderValueChange(value)
         return
     
     def G_SliderValueChange(self, value):
         # TODO prebaciti mozda ovdje jer mi se cini kao da se zablokira GUI kada se ovo pozove
         # print(f'Inside PCAParametersWindow.G_SliderValueChange')
+        self.change_geometry_label(value, self.sender())
+        self.parent.G_SliderValueChange(value)
+        return
+    
+    def change_geometry_label(self, value, slider):
         try:
-            slider = self.sender()
             slider_id = int(slider.objectName().split('_')[-1])
             geometry_comp_label = getattr(self.params_ui, f'geom_comp_label_{slider_id}')
             percentage = np.abs((value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100)
@@ -134,9 +131,20 @@ class PCAParametersWindow(QWidget):
         except Exception as e:
             print(f'Error updating geometry slider label: {e}')
             print(f'Geometry weight value was probably changed by the program, not by the user.')
-        
-        self.parent.G_SliderValueChange(value)
         return
+    
+    def change_texture_label(self, value, slider):
+        try:
+            slider_id = int(slider.objectName().split('_')[-1])
+            texture_comp_label = getattr(self.params_ui, f'tex_comp_label_{slider_id}')
+            percentage = np.abs((value - slider.minimum()) / (slider.maximum() - slider.minimum()) * 100)
+            texture_comp_label_text = f'{value} = {percentage : .1f}%'
+            texture_comp_label.setText(texture_comp_label_text)
+        except Exception as e:
+            print(f'Error updating texture slider label: {e}')
+            print(f'Texture weight value was probably changed by the program, not by the user.')
+        return
+
 
     
 
@@ -209,6 +217,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ui.Process.clicked.connect(self.ProcessClicked)
         # Connect the button to the function SaveOBJ (will write a 3D file)
         self.ui.exportResult.clicked.connect(self.SaveOBJ)
+        self.ui.pb_stop_processing.clicked.connect(self.stop_threads)
 
         # Sliders
         # Connect the slider to the function T_SliderValueChange
@@ -224,8 +233,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.finished_threads_counter = 0
         self.pca_texture_thread = TextureThreadClass()
         self.pca_texture_thread.finished.connect(self.PCA_Tex)
+        self.pca_texture_thread.updated.connect(self.update_texture_progress_bar)
         self.pca_geometry_thread = GeometryThreadClass()
         self.pca_geometry_thread.finished.connect(self.PCA_Geo)
+        self.pca_geometry_thread.updated.connect(self.update_geometry_progress_bar)
+
 
     def closeEvent(self, event):
         print(f'Inside closeEvent')
@@ -241,6 +253,27 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.pca_geometry_thread.stop()
                 self.pca_geometry_thread.quit()
         return
+    
+    def stop_threads(self):
+        print(f'Manually stopping threads')
+        if hasattr(self, 'pca_texture_thread'):
+            if self.pca_texture_thread.isRunning():
+                self.pca_texture_thread.requestInterruption()
+
+        if hasattr(self, 'pca_geometry_thread'):
+            if self.pca_geometry_thread.isRunning():
+                self.pca_geometry_thread.requestInterruption()
+
+        return
+    
+    def update_texture_progress_bar(self, value):
+        self.ui.progress_texture.setValue(value)
+        return
+    
+    def update_geometry_progress_bar(self, value):
+        self.ui.progress_geometry.setValue(value)
+        return
+
     
     def LoadFileClicked(self):
         try:

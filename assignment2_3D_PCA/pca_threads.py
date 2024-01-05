@@ -6,7 +6,8 @@ from OBJ import OBJFastV
 from scipy import linalg
 
 class TextureThreadClass(QThread):
-
+    
+    updated = pyqtSignal(int)
     finished = pyqtSignal(dict)
     running = False
 
@@ -21,6 +22,8 @@ class TextureThreadClass(QThread):
     def stop(self):
         self.running = False
         print(f'Stopped thread for texture PCA')
+        self.quit()
+        return
 
     def process_PCA_texture(self):
         print(f'Running thread for texture PCA')
@@ -35,6 +38,7 @@ class TextureThreadClass(QThread):
         except Exception as e:
             print(f'Error in thread for texture PCA: {e}')
         self.finished.emit(texture_pca_result)
+        self.updated.emit(100)
         print(f'Finished thread for texture PCA')
         return
 
@@ -55,7 +59,7 @@ class TextureThreadClass(QThread):
         data = np.zeros((num_models, model_size[0] * model_size[1] * model_size[2]), dtype=np.float32)
         for i in range(0, num_models):
             data[i, :] = np.float32(imread(textures_pngs[i]) / 255).flatten()
-            
+            self.updated.emit(int((i+1)/(num_models + 5)*100)) # +5 so that it reaches 100% after SVD
         # Calculate the mean
         mu = np.mean(data, 0)
         data -= mu
@@ -66,6 +70,7 @@ class TextureThreadClass(QThread):
 
 class GeometryThreadClass(QThread):
 
+    updated = pyqtSignal(int)
     finished = pyqtSignal(dict)
     running = False
 
@@ -82,6 +87,7 @@ class GeometryThreadClass(QThread):
     def stop(self):
         self.running = False
         print(f'Stopped thread for geometry PCA')
+        self.quit()
         return
 
     def process_PCA_geometry(self):
@@ -97,6 +103,7 @@ class GeometryThreadClass(QThread):
         except Exception as e:
             print(f'Error in thread for geometry PCA: {e}')
         self.finished.emit(geometry_pca_result)
+        self.updated.emit(100)
         print(f'Finished thread for geometry PCA')
         return
     
@@ -119,6 +126,7 @@ class GeometryThreadClass(QThread):
             y_coords = [row[1] for row in vertices]
             z_coords = [row[2] for row in vertices]
             data[i, :] = np.hstack((x_coords, y_coords, z_coords))
+            self.updated.emit(int((i+1)/(num_models + 5)*100)) # +5 so that it reaches 100% after SVD
         mu = np.mean(data, 0)
         data -= mu
         print(f'Finished reading geometry models')
