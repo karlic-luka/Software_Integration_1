@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>979</width>
-    <height>794</height>
+    <width>1045</width>
+    <height>692</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -143,6 +143,20 @@
                  </widget>
                 </item>
                 <item>
+                 <widget class="QProgressBar" name="progress_texture">
+                  <property name="value">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QProgressBar" name="progress_geometry">
+                  <property name="value">
+                   <number>0</number>
+                  </property>
+                 </widget>
+                </item>
+                <item>
                  <spacer name="verticalSpacer_5">
                   <property name="orientation">
                    <enum>Qt::Vertical</enum>
@@ -157,6 +171,31 @@
                    </size>
                   </property>
                  </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="pb_stop_processing">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>16777215</width>
+                    <height>50</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>Stop Processing</string>
+                  </property>
+                  <property name="default">
+                   <bool>false</bool>
+                  </property>
+                  <property name="flat">
+                   <bool>false</bool>
+                  </property>
+                 </widget>
                 </item>
                 <item>
                  <widget class="QGroupBox" name="uipaneldisplay">
@@ -378,8 +417,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>979</width>
-     <height>26</height>
+     <width>1045</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>
